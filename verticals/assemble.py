@@ -59,9 +59,15 @@ def assemble_video(
     # Determine video filter (captions via ASS)
     vf_parts = []
     if ass_path and Path(ass_path).exists():
-        # On Windows, use forward slashes for ffmpeg filter paths
-        escaped_ass = str(ass_path).replace("\\", "/").replace(":", "\\:")
-        vf_parts.append(f"ass={escaped_ass}")
+        import sys, shutil
+        if sys.platform == "win32":
+            # On Windows, copy ASS to work dir and use relative path
+            # to avoid drive-letter colon escaping issues with ffmpeg
+            local_ass = out_dir / "subs.ass"
+            shutil.copy2(ass_path, local_ass)
+            vf_parts.append("ass=subs.ass")
+        else:
+            vf_parts.append(f"ass={ass_path}")
     vf = ",".join(vf_parts) if vf_parts else None
 
     if music_path and Path(music_path).exists():
@@ -104,6 +110,9 @@ def assemble_video(
             str(out_path), "-y", "-loglevel", "quiet",
         ]
 
-    run_cmd(cmd)
+    # On Windows, run from work dir so relative ASS path works
+    import sys
+    cwd_kwargs = {"cwd": str(out_dir)} if sys.platform == "win32" else {}
+    run_cmd(cmd, **cwd_kwargs)
     log(f"Video assembled: {out_path}")
     return out_path
