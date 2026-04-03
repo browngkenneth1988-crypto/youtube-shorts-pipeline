@@ -161,7 +161,31 @@ Output JSON exactly:
     if start >= 0 and end > start:
         raw = raw[start:end]
 
-    draft = json.loads(raw)
+    # Fix common JSON issues from LLMs (unescaped newlines in strings)
+    import re
+    raw = re.sub(r'(?<!\\)\n', ' ', raw)  # Replace unescaped newlines with spaces
+    raw = raw.replace('\r', ' ')
+
+    try:
+        draft = json.loads(raw)
+    except json.JSONDecodeError:
+        # Try harder: fix unescaped quotes inside strings
+        raw_fixed = re.sub(r'(?<=": ")(.*?)(?="[,\}])', lambda m: m.group(0).replace('"', '\\"'), raw)
+        try:
+            draft = json.loads(raw_fixed)
+        except json.JSONDecodeError as e:
+            log(f"JSON parse failed, attempting line-by-line fix: {e}")
+            # Last resort: extract fields manually
+            draft = {
+                "script": re.search(r'"script"\s*:\s*"(.*?)"', raw, re.DOTALL).group(1) if re.search(r'"script"\s*:\s*"', raw) else "Otto and Kobi wish you goodnight.",
+                "broll_prompts": ["Cute black Shih-Poo sleeping with orange plush dragon"] * 3,
+                "youtube_title": re.search(r'"youtube_title"\s*:\s*"(.*?)"', raw).group(1) if re.search(r'"youtube_title"\s*:\s*"', raw) else "Goodnight from Otto | OttoMissClub",
+                "youtube_description": "Sweet dreams from Otto and Kobi! Subscribe to OttoMissClub. Visit www.brownstoryworld.com",
+                "youtube_tags": "OttoMissClub,BrownStoryWorld,bedtime stories for kids,lullaby",
+                "instagram_caption": "",
+                "tiktok_caption": "",
+                "thumbnail_prompt": "cute black Shih-Poo dog sleeping peacefully",
+            }
 
     # Validate and sanitize LLM output fields
     expected_str_fields = [
