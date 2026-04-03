@@ -6,6 +6,7 @@ visual vocabulary for b-roll prompts, and thumbnail guidance.
 """
 
 import json
+import random
 
 from .config import PLATFORM_CONFIGS
 from .llm import call_llm
@@ -78,6 +79,38 @@ def generate_draft(
 
     channel_note = f"\nChannel context: {channel_context}" if channel_context else ""
 
+    # Children's quotes — inject if niche has them
+    children_quotes = profile.get("children_quotes", [])
+    quote_block = ""
+    if children_quotes:
+        # Pick 5 random quotes for the LLM to choose from
+        sample = random.sample(children_quotes, min(5, len(children_quotes)))
+        quote_block = (
+            "\nCHILDREN'S QUOTES (you MUST include exactly ONE of these in the script, "
+            "narrate it softly and display as on-screen text near the end):\n"
+            + "\n".join(f'  - "{q}"' for q in sample)
+        )
+        quote_instruction = profile.get("script", {}).get("quote_instruction", "")
+        if quote_instruction:
+            quote_block += f"\n{quote_instruction}"
+
+    # Channel branding — inject into description/tags
+    channel_config = profile.get("channel", {})
+    branding_block = ""
+    if channel_config:
+        parts = []
+        if channel_config.get("name"):
+            parts.append(f"Channel name: {channel_config['name']}")
+        if channel_config.get("website"):
+            parts.append(f"Website: {channel_config['website']}")
+        if channel_config.get("youtube_description_footer"):
+            footer = channel_config["youtube_description_footer"].strip()
+            parts.append(f"ALWAYS append this to youtube_description:\n{footer}")
+        if channel_config.get("tags"):
+            parts.append(f"ALWAYS include these tags in youtube_tags: {','.join(channel_config['tags'][:10])}")
+        if parts:
+            branding_block = "\nCHANNEL BRANDING:\n" + "\n".join(parts)
+
     prompt = f"""You are writing a {platform_label} script ({max_words} words max, ~60-90 seconds spoken).{channel_note}
 
 {script_context}
@@ -90,6 +123,8 @@ LIVE RESEARCH (use ONLY names/facts from here — never fabricate):
 --- END RESEARCH DATA ---
 {visual_guidance}
 {thumb_guidance}
+{quote_block}
+{branding_block}
 
 RULES:
 - Anti-hallucination: only use names, scores, events found in research above

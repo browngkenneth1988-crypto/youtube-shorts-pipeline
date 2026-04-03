@@ -118,12 +118,27 @@ def run_daily_pipeline(
     DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
     job_id = str(int(time.time()))
 
+    # Build channel context from niche profile
+    profile = load_niche(niche)
+    character = profile.get("character", {})
+    channel = profile.get("channel", {})
+    channel_name = channel.get("name", "OttoMissClub")
+    website = channel.get("website", "www.brownstoryworld.com")
+
+    channel_context = (
+        f"{channel_name} — a children's bedtime and comfort channel. Theme: {theme}. "
+        f"{character.get('name', 'Otto')} is a {character.get('breed', 'small curly black Shih-Poo')}. "
+        f"His favorite toy is {character.get('sidekick', 'Kobi, an orange plush dragon')}. "
+        f"Every video includes a gentle inspirational quote for children. "
+        f"Tone is soothing, warm, and safe for young kids. "
+        f"Lullaby-style background music. "
+        f"Website: {website}"
+    )
+
     log(f"Drafting script for: {topic}")
     draft = generate_draft(
         topic,
-        channel_context=f"Otto the Shih-Poo channel. Theme: {theme}. "
-                        f"Otto is a small curly black Shih-Poo. "
-                        f"His favorite toy is Kobi, an orange plush dragon.",
+        channel_context=channel_context,
         niche=niche,
         platform="shorts",
         provider=provider,
@@ -157,7 +172,6 @@ def run_daily_pipeline(
     from verticals.niche import get_voice_config, get_caption_config, get_music_config
     import shutil
 
-    profile = load_niche(niche)
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     work_dir = MEDIA_DIR / f"work_{job_id}_{lang}"
     work_dir.mkdir(exist_ok=True)

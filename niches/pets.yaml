@@ -1,63 +1,122 @@
 name: pets
-display_name: "Otto the Shih-Poo — Pet Life & Adventures"
-description: "For channels starring Otto, a curly black Shih-Poo, and his plush dragon buddy Kobi."
+display_name: "OttoMissClub — Otto the Shih-Poo | Bedtime & Comfort for Kids"
+description: "Children's comfort channel starring Otto the Shih-Poo and his plush dragon Kobi. Lullabies, bedtime stories, and gentle inspiration for little ones."
 
-# Character reference — used by Leonardo.ai image-to-image pipeline
+# ─────────────────────────────────────────────────────
+# Channel Branding
+# ─────────────────────────────────────────────────────
+channel:
+  name: "OttoMissClub"
+  website: "www.brownstoryworld.com"
+  youtube_description_footer: |
+    Subscribe to OttoMissClub for sweet bedtime moments with Otto and Kobi!
+    Visit us: www.brownstoryworld.com
+    #OttoMissClub #BrownStoryWorld #OttoTheShihPoo
+  tags:
+    - "OttoMissClub"
+    - "BrownStoryWorld"
+    - "Otto the Shih-Poo"
+    - "Kobi the Dragon"
+    - "bedtime stories for kids"
+    - "lullaby for babies"
+    - "kids sleep music"
+    - "comforting videos for children"
+    - "Shih-Poo"
+    - "cute dog videos"
+    - "children's bedtime"
+    - "sleep tight"
+    - "goodnight stories"
+    - "calming videos for kids"
+    - "puppy lullaby"
+
+# ─────────────────────────────────────────────────────
+# Character Reference
+# ─────────────────────────────────────────────────────
 character:
   name: "Otto"
   breed: "black Shih-Poo (Shih Tzu × Poodle mix)"
   appearance: "small curly-haired black dog with brown eyes, fluffy dark coat, compact build"
-  sidekick: "Kobi — an orange/pink plush dragon stuffed animal, Otto's favorite toy"
+  sidekick: "Kobi — an orange/pink plush dragon stuffed animal, Otto's favorite toy and bedtime companion"
   reference_images:
     - "references/otto_with_kobi.png"
     - "references/otto_standing.png"
-  personality: "playful, curious, loves his plush dragon Kobi, cozy beds, and treats"
+  personality: "gentle, sleepy, cuddly, loves his plush dragon Kobi, cozy beds, and bedtime routines"
+
+# ─────────────────────────────────────────────────────
+# Inspirational Quotes for Children
+# ─────────────────────────────────────────────────────
+# One quote is included in every video script (on-screen text + narrated)
+children_quotes:
+  - "Sleep tight, little one. Otto and Kobi are watching over you."
+  - "You are braver than you believe, stronger than you seem, and loved more than you know."
+  - "Close your eyes. Dream big. Otto will be here when you wake up."
+  - "The stars are shining just for you tonight, little one."
+  - "You are safe. You are loved. Goodnight, sweet dreams."
+  - "Every night Otto whispers — you are wonderful just the way you are."
+  - "Dream of adventures, little one. Tomorrow is a brand new day."
+  - "Kobi the dragon says — even the bravest need their sleep."
+  - "The moon is your nightlight, and Otto is your friend. Goodnight."
+  - "You did so well today. Now rest, little dreamer."
+  - "Otto loves you to the moon and back. Sweet dreams."
+  - "Snuggle up tight. The world is better because you're in it."
+  - "May your dreams be as soft as Otto's fur. Goodnight, little one."
+  - "You are a little miracle. Sleep well and dream of magic."
+  - "Kobi guards your dreams. Otto guards your heart. Goodnight."
+  - "Breathe in sleepy dust, breathe out worries. Sweet dreams, little star."
+  - "Tomorrow you'll shine even brighter. But for now, rest."
+  - "Every star in the sky is cheering for you. Goodnight."
+  - "Otto says — being kind today made the whole world smile."
+  - "You are enough. You are loved. You are magic. Now sleep."
+  - "Let Otto's gentle snores be your lullaby tonight."
+  - "Hush now, little one. The night is soft and safe."
+  - "Dream of flowers and butterflies and Otto chasing his tail."
+  - "The night wraps you up like a warm blanket. Sleep well."
+  - "Otto and Kobi say — we're so proud of you today."
+  - "Close your eyes and count the stars. Otto is counting with you."
+  - "Sweet child, the world is lucky to have you. Goodnight."
+  - "Even Otto's dragon Kobi needs sleep. And so do you, little one."
 
 # ─────────────────────────────────────────────────────
 # Script Intelligence
 # ─────────────────────────────────────────────────────
 script:
-  tone: "warm, funny, wholesome — like narrating your dog's inner monologue"
-  pacing: "upbeat but not rushed, comedic timing matters, pause for cute moments"
-  perspective: "first person as Otto's owner, or playful third-person narration of Otto's thoughts"
-  word_count: "120 to 150"
-  sentence_style: "short, punchy, playful. Mix humor with heart. End on an aww moment."
+  tone: "gentle, warm, soothing — like a bedtime story narrator speaking softly to a child"
+  pacing: "slow and calming, with pauses for warmth and breathing, never rushed"
+  perspective: "gentle third-person narrator telling the child about Otto's bedtime adventures"
+  word_count: "100 to 130"
+  sentence_style: "short, soft, rhythmic. Almost lyrical. Every sentence should feel like a warm hug."
 
   hooks:
-    - id: inner_monologue
-      template: "If Otto could talk, this is exactly what he'd say about {topic}."
-      when: "relatable pet behavior that every dog owner recognizes"
-    - id: caught_in_the_act
-      template: "I left Otto alone for 5 minutes. This is what I came back to."
-      when: "mischief, mess, or unexpected behavior"
-    - id: dramatic_reaction
-      template: "Otto just discovered {thing} and his reaction is priceless."
-      when: "dog reacting to something new — food, toy, sound, animal"
-    - id: day_in_the_life
-      template: "A day in the life of Otto — the most spoiled Shih-Poo on the internet."
-      when: "routine content, daily life, morning/evening"
-    - id: challenge
-      template: "I tried {challenge} with Otto. It did NOT go as planned."
-      when: "dog challenge, trick training, obstacle course"
-    - id: versus
-      template: "Otto vs {opponent}. Who wins? You already know."
-      when: "dog vs toy, dog vs mirror, dog vs vacuum, dog vs cat"
-    - id: otto_and_kobi
-      template: "Otto and his dragon Kobi are at it again. You won't believe this."
-      when: "content featuring Otto with his plush dragon toy Kobi"
-    - id: tip_hook
-      template: "Every Shih-Poo owner needs to know this about {topic}."
-      when: "breed-specific care tips, grooming, training"
-    - id: storytime
-      template: "The story of how Otto {action} is the funniest thing you'll see today."
-      when: "funny anecdote or memorable moment"
+    - id: bedtime_whisper
+      template: "Shh... Otto has a bedtime secret to share with you tonight."
+      when: "default opening for most bedtime content"
+    - id: sleepy_otto
+      template: "Otto is getting sleepy. Will you snuggle up and join him?"
+      when: "bedtime routine content, settling down"
+    - id: dream_adventure
+      template: "Tonight, Otto and Kobi are going on a dream adventure. Come along."
+      when: "imaginative bedtime story content"
+    - id: goodnight_world
+      template: "Otto wants to say goodnight to everything he loves. Starting with you."
+      when: "gratitude and winding down content"
+    - id: gentle_lesson
+      template: "Otto learned something beautiful today. Let him tell you about it."
+      when: "gentle life lessons and kindness content"
+    - id: lullaby_intro
+      template: "Close your eyes. Otto has the sweetest lullaby for you tonight."
+      when: "lullaby-focused content"
+    - id: kobi_story
+      template: "Kobi the dragon has a magical story for bedtime. Are you ready?"
+      when: "content featuring Kobi the plush dragon"
+    - id: counting_stars
+      template: "One star, two stars, three... Otto is counting them just for you."
+      when: "calming counting or mindfulness content"
 
   cta_variants:
-    - "Follow for daily Otto content."
-    - "Subscribe for more Otto and Kobi adventures."
-    - "Drop a paw emoji if your dog does this too."
-    - "Comment your dog's name below."
-    - "Follow if Otto made you smile today."
+    - "Subscribe to OttoMissClub for sweet dreams every night."
+    - "Follow Otto and Kobi for bedtime magic every day."
+    - "Goodnight from OttoMissClub. See you tomorrow night."
+    - "Sweet dreams, little one. Visit us at brownstoryworld.com."
 
   forbidden_phrases:
     - "like and subscribe"
@@ -67,38 +126,45 @@ script:
     - "in this video"
     - "hey everyone"
     - "click the link"
+    - "scary"
+    - "frightening"
+    - "nightmare"
 
   structure:
-    opening: "Hook in first 2 seconds with Otto doing something cute/funny. No intro, straight into the moment."
-    middle: "Build the story or gag. 2-3 beats of escalation. Mix narration with implied dog reactions. Feature Kobi the dragon when relevant."
-    closing: "Payoff moment (the punchline, the cute climax). Then soft CTA. Always end on warmth."
+    opening: "Soft hook in first 3 seconds. A gentle whisper or calming visual of Otto settling down. No loud sounds."
+    middle: "A short bedtime story or gentle scene with Otto and Kobi. Include one inspirational quote for the child. Keep it soothing and rhythmic."
+    closing: "End with a warm goodnight message and soft CTA for OttoMissClub. The last line should always be comforting."
+
+  # IMPORTANT: Every script MUST include one children's quote
+  quote_instruction: "You MUST include exactly one inspirational children's quote in the script. Pick from the CHILDREN'S QUOTES list below. Display it as on-screen text AND narrate it softly. Place it near the end of the script, before the CTA."
 
 # ─────────────────────────────────────────────────────
 # Visual Intelligence
 # ─────────────────────────────────────────────────────
 visuals:
-  style: "warm, soft lighting, cozy indoor scenes and sunny outdoor settings"
-  mood: "wholesome, heartwarming, playful, occasionally dramatic for comedy"
-  color_palette: ["#FFF8F0", "#FFD6A5", "#C9B99A", "#5C4033", "#1A1A1A"]
+  style: "warm, dreamy, soft-focus, pastel tones, gentle lighting like a nightlight"
+  mood: "cozy, sleepy, magical, safe, nurturing"
+  color_palette: ["#FFF8F0", "#FFD6A5", "#E8D5C4", "#B8A9C9", "#2C2C54"]
 
   subjects:
     prefer:
-      - "small curly black Shih-Poo dog on a cozy bed with an orange plush dragon toy"
-      - "black Shih-Poo playing in a sunny park"
-      - "close-up of curly black dog with expressive brown eyes"
-      - "small black dog cuddling an orange stuffed dragon"
-      - "black doodle dog wearing a cute bandana"
-      - "curly-haired black dog investigating a treat or toy"
-      - "adorable black Shih-Poo giving puppy eyes"
-      - "cozy scene of small black dog sleeping curled up with plush dragon"
+      - "small curly black Shih-Poo dog sleeping peacefully on a soft bed"
+      - "black Shih-Poo cuddling an orange plush dragon under a blanket"
+      - "dreamy nighttime scene with a small black dog by a window with stars"
+      - "cozy bedroom with warm nightlight and a sleeping curly black dog"
+      - "small black dog and plush dragon toy on a cloud-like bed"
+      - "gentle watercolor style of a curly black puppy with stars and moon"
+      - "close-up of peaceful sleeping black Shih-Poo with soft bokeh lights"
+      - "magical bedtime scene with a small black dog and fireflies"
     avoid:
-      - "generic stock photo dogs"
-      - "aggressive or scary dog imagery"
-      - "clinical veterinary settings"
-      - "low quality or blurry pet photos"
-      - "dogs of completely different breeds (unless comparing)"
+      - "bright harsh lighting"
+      - "scary or dark imagery"
+      - "aggressive animals"
+      - "loud or chaotic scenes"
+      - "clinical or sterile environments"
+      - "anything unsuitable for young children"
 
-  prompt_suffix: "small curly-haired black Shih-Poo dog, warm lighting, soft focus background, adorable, photorealistic, 8K detail, cozy atmosphere"
+  prompt_suffix: "small curly-haired black Shih-Poo dog, dreamy soft lighting, pastel colors, cozy bedtime atmosphere, gentle and magical, children's storybook quality, warm and safe feeling"
 
   # Leonardo.ai settings for reference-image consistency
   leonardo:
@@ -112,20 +178,21 @@ visuals:
 # Voice Intelligence
 # ─────────────────────────────────────────────────────
 voice:
-  pace: "moderate, approximately 140 words per minute with natural pauses for comedic timing"
-  energy: "warm, friendly, slightly playful — like talking to your best friend about your dog"
-  style: "think wholesome pet vlogger, genuine and enthusiastic without being over the top"
+  pace: "slow and soothing, approximately 110 words per minute with gentle pauses"
+  energy: "soft, warm, nurturing — like a parent reading a bedtime story"
+  style: "think gentle children's audiobook narrator, calming and loving"
 
   suggested_voices:
     edge_tts:
       en: "en-US-JennyNeural"
       hi: "hi-IN-SwaraNeural"
     elevenlabs:
-      voice_id: "EXAVITQu4vr4xnSDxMaL"  # Sarah — warm, friendly
+      voice_id: "EXAVITQu4vr4xnSDxMaL"  # Sarah — warm, gentle
       settings:
-        stability: 0.5
+        stability: 0.7
         similarity_boost: 0.75
-        style: 0.4
+        style: 0.2
+        speaking_rate: 0.85
 
 # ─────────────────────────────────────────────────────
 # Caption Intelligence
@@ -134,45 +201,58 @@ captions:
   highlight_color: "#FFD6A5"
   text_color: "#FFFFFF"
   font_family: "Arial"
-  font_size: 72
+  font_size: 68
   font_weight: "bold"
   position: "lower_third"
   background: "semi_transparent_dark"
   words_per_group: 3
 
 # ─────────────────────────────────────────────────────
-# Music Intelligence
+# Music Intelligence — LULLABIES
 # ─────────────────────────────────────────────────────
 music:
-  mood: "happy, lighthearted ukulele or piano, playful, no lyrics"
-  energy: "medium-high"
-  tags: ["happy", "upbeat", "cute", "playful", "ukulele", "acoustic", "wholesome"]
-  duck_volume_speech: 0.10
-  duck_volume_gap: 0.20
+  mood: "gentle lullaby, soft piano, music box, soothing strings, no lyrics or soft humming only"
+  energy: "low"
+  tags: ["lullaby", "sleep", "baby", "calming", "piano", "music box", "gentle", "bedtime", "soothing"]
+  duck_volume_speech: 0.08
+  duck_volume_gap: 0.15
+
+  # Top lullaby styles to match (for music selection or generation)
+  lullaby_references:
+    - "Brahms Lullaby"
+    - "Twinkle Twinkle Little Star (music box version)"
+    - "Rock-a-Bye Baby (soft piano)"
+    - "Hush Little Baby (gentle acoustic)"
+    - "Mozart Lullaby K.550 (slow arrangement)"
+    - "Weightless by Marconi Union (ambient)"
+    - "Claire de Lune by Debussy (gentle piano)"
+    - "Somewhere Over the Rainbow (music box)"
+    - "You Are My Sunshine (soft acoustic)"
+    - "A Thousand Years (piano instrumental)"
 
 # ─────────────────────────────────────────────────────
 # Thumbnail Intelligence
 # ─────────────────────────────────────────────────────
 thumbnail:
-  style: "bright background, Otto front and center, bold colorful text, expressive dog face"
+  style: "dreamy pastel background, Otto sleeping or cuddling Kobi, soft text with stars"
   text_color: "#FFFFFF"
   accent_color: "#FFD6A5"
   text_position: "top_center"
   max_words: 4
-  font_style: "bold rounded sans serif"
+  font_style: "soft rounded sans serif"
   guidelines:
-    - "Otto's face should take up at least 50% of the thumbnail"
-    - "Use bright warm colors — yellow, orange, cream"
-    - "Text should be 4 words max with emoji optional"
-    - "Exaggerated expressions or funny poses perform best"
-    - "Add subtle drop shadow behind text for readability"
+    - "Otto should look peaceful and cozy"
+    - "Use soft pastel colors — lavender, cream, baby blue, warm gold"
+    - "Add stars, moons, or soft sparkles for a bedtime feel"
+    - "Text should feel gentle — no bold aggressive fonts"
+    - "Include subtle OttoMissClub watermark in corner"
 
 # ─────────────────────────────────────────────────────
 # Topic Discovery
 # ─────────────────────────────────────────────────────
 discovery:
   reddit:
-    subreddits: ["dogs", "rarepuppers", "aww", "shihpoo", "Shihtzu", "poodles", "WhatsWrongWithYourDog"]
+    subreddits: ["dogs", "rarepuppers", "aww", "shihpoo", "Shihtzu", "poodles", "beyondthebump", "Parenting"]
   rss:
     feeds:
       - "https://www.akc.org/feed/"
@@ -186,46 +266,44 @@ discovery:
 # ─────────────────────────────────────────────────────
 daily_themes:
   monday:
-    theme: "Motivation Monday"
+    theme: "Magical Monday"
     topics:
-      - "Otto's morning routine — the most dramatic wake-up ever"
-      - "How Otto motivates me to go on walks"
-      - "Monday energy vs Otto's energy"
+      - "Otto and Kobi discover a magical star outside their window"
+      - "Otto's Monday morning cuddles — the coziest way to start the week"
+      - "A gentle wish from Otto — may your week be full of kindness"
   tuesday:
-    theme: "Training Tuesday"
+    theme: "Tiny Tales Tuesday"
     topics:
-      - "Teaching Otto a new trick"
-      - "Otto's smartest moments caught on camera"
-      - "Things Otto has learned this month"
+      - "The story of how Otto met his dragon Kobi"
+      - "Otto's little adventure to the enchanted garden"
+      - "Kobi the dragon tells Otto a bedtime story about bravery"
   wednesday:
-    theme: "Wacky Wednesday"
+    theme: "Wisdom Wednesday"
     topics:
-      - "Otto vs the vacuum cleaner"
-      - "Otto's weirdest habits explained"
-      - "Things Otto does that make no sense"
-      - "Otto tries to hide Kobi the dragon from me"
+      - "Otto learns that being kind is the bravest thing you can do"
+      - "What Otto taught me about patience today"
+      - "Otto and Kobi learn to share — a gentle lesson for little ones"
   thursday:
-    theme: "Throwback Thursday"
+    theme: "Thankful Thursday"
     topics:
-      - "Otto as a puppy vs now"
-      - "The day we brought Otto home"
-      - "Otto and Kobi's origin story — how he chose his dragon"
+      - "Otto is thankful for his warm bed and his best friend Kobi"
+      - "Three things Otto loves most — and one of them is you"
+      - "Otto says thank you to the moon for watching over him"
   friday:
-    theme: "Fun Friday"
+    theme: "Friendship Friday"
     topics:
-      - "Otto reviews his new toy"
-      - "Otto's favorite treats ranked"
-      - "Otto's playdate adventures"
-      - "Otto introduces Kobi to a new friend"
+      - "Otto and Kobi's friendship is the sweetest thing you'll see today"
+      - "Otto makes a new friend at the park — a gentle story"
+      - "Why Otto carries Kobi everywhere — a story about love"
   saturday:
     theme: "Storytime Saturday"
     topics:
-      - "The time Otto escaped the yard"
-      - "Otto's funniest vet visit"
-      - "Why Otto carries Kobi everywhere he goes"
+      - "Once upon a time, a little black dog named Otto found a dragon"
+      - "The night Otto counted every star in the sky"
+      - "Otto's dream adventure — flying with Kobi over rainbow mountains"
   sunday:
-    theme: "Self-Care Sunday"
+    theme: "Sweet Dreams Sunday"
     topics:
-      - "Otto's spa day — grooming a Shih-Poo"
-      - "Otto's favorite nap spots ranked"
-      - "Sunday cuddles with Otto and Kobi"
+      - "Otto's bedtime routine — the coziest goodnight in the world"
+      - "Otto and Kobi say goodnight to the sun and hello to the stars"
+      - "A Sunday lullaby from Otto to you — sleep tight, little one"
