@@ -133,6 +133,36 @@ def _generate_say(script: str, out_dir: Path) -> Path:
     return mp3_path
 
 
+def _generate_pyttsx3(script: str, out_dir: Path) -> Path:
+    """Windows fallback TTS using pyttsx3 (built-in Windows voices)."""
+    import pyttsx3
+
+    wav_path = out_dir / "voiceover_pyttsx3.wav"
+    mp3_path = out_dir / "voiceover_en.mp3"
+
+    engine = pyttsx3.init()
+    engine.setProperty('rate', 130)  # Slower for bedtime content
+    engine.setProperty('volume', 1.0)
+
+    # Try to find a female voice for warmth
+    voices = engine.getProperty('voices')
+    for voice in voices:
+        if 'female' in voice.name.lower() or 'zira' in voice.name.lower():
+            engine.setProperty('voice', voice.id)
+            break
+
+    engine.save_to_file(script, str(wav_path))
+    engine.runAndWait()
+
+    # Convert WAV to MP3
+    run_cmd([
+        "ffmpeg", "-i", str(wav_path), "-acodec", "libmp3lame",
+        "-q:a", "2", str(mp3_path), "-y", "-loglevel", "quiet",
+    ])
+    log(f"pyttsx3 voiceover saved: {mp3_path.name}")
+    return mp3_path
+
+
 # ─────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────
@@ -211,8 +241,12 @@ def generate_voiceover(
                 log("Falling back to ElevenLabs...")
                 provider = "elevenlabs"
             else:
-                log("Falling back to macOS say...")
-                return _generate_say(script, out_dir)
+                log("Falling back to pyttsx3 (Windows TTS)...")
+                try:
+                    return _generate_pyttsx3(script, out_dir)
+                except Exception as e2:
+                    log(f"pyttsx3 failed: {e2}, trying macOS say...")
+                    return _generate_say(script, out_dir)
 
     if provider == "elevenlabs":
         try:
