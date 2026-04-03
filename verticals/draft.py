@@ -164,7 +164,7 @@ RULES:
 - Never use any of the NEVER USE phrases
 - B-roll prompts must follow the visual guidance (style, mood, preferred subjects)
 
-Output JSON exactly:
+Output ONLY a valid JSON object, nothing else. Start with {{ and end with }}:
 {{
   "script": "...",
   "broll_prompts": ["prompt for frame 1", "prompt for frame 2", "prompt for frame 3"],
@@ -194,6 +194,13 @@ Output JSON exactly:
     # Fix common JSON issues from LLMs (unescaped newlines in strings)
     import re
     log(f"Raw LLM response (first 500 chars): {raw[:500]}")
+
+    # If response starts with "script" but no opening brace, add one
+    stripped = raw.strip()
+    if stripped.startswith('"script"') or stripped.startswith("'script'"):
+        raw = "{" + stripped
+        if not raw.rstrip().endswith("}"):
+            raw = raw.rstrip() + "}"
 
     # Try parsing as-is first
     try:
