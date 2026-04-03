@@ -22,7 +22,7 @@ def _generate_image_gemini(prompt: str, output_path: Path, api_key: str):
     """Generate image via Gemini's image generation capability."""
     url = (
         "https://generativelanguage.googleapis.com/v1beta"
-        "/models/gemini-2.0-flash-preview-image-generation:generateContent"
+        "/models/gemini-2.0-flash-exp-image-generation:generateContent"
     )
     body = {
         "contents": [{"parts": [{"text": f"Generate an image: {prompt}"}]}],

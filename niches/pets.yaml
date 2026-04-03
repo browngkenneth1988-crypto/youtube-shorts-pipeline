@@ -169,7 +169,7 @@ visuals:
   # Leonardo.ai settings for reference-image consistency
   leonardo:
     provider: "leonardo"
-    model_id: "aa77f04e-83f0-4631-a13b-5ab51bb5e990"  # Leonardo Kino XL
+    model_id: "6b645e3a-d64f-4341-a6d8-7a3690fbf042"  # Leonardo Phoenix
     guidance_scale: 7
     init_strength: 0.35
     num_images: 1

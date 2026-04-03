@@ -68,7 +68,7 @@ def generate_image_leonardo(
     output_path: Path,
     api_key: str,
     reference_image_path: Path | None = None,
-    model_id: str = "aa77f04e-83f0-4631-a13b-5ab51bb5e990",
+    model_id: str = "6b645e3a-d64f-4341-a6d8-7a3690fbf042",  # Leonardo Phoenix
     guidance_scale: int = 7,
     init_strength: float = 0.35,
     width: int = 576,
@@ -88,7 +88,6 @@ def generate_image_leonardo(
         "height": height,
         "guidance_scale": guidance_scale,
         "num_images": 1,
-        "promptMagic": True,
     }
 
     # Upload reference image for img2img if provided
