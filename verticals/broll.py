@@ -22,10 +22,10 @@ def _generate_image_gemini(prompt: str, output_path: Path, api_key: str):
     """Generate image via Gemini's image generation capability."""
     url = (
         "https://generativelanguage.googleapis.com/v1beta"
-        "/models/gemini-2.0-flash-exp-image-generation:generateContent"
+        "/models/gemini-2.5-flash-image:generateContent"
     )
     body = {
-        "contents": [{"parts": [{"text": f"Generate an image: {prompt}"}]}],
+        "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "responseModalities": ["TEXT", "IMAGE"],
         },
@@ -117,8 +117,8 @@ def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list
                         output_path=out_path,
                         api_key=api_key,
                         reference_image_path=reference_image,
-                        model_id=leo_config.get("model_id", "aa77f04e-83f0-4631-a13b-5ab51bb5e990"),
-                        guidance_scale=leo_config.get("guidance_scale", 7),
+                        model_id=leo_config.get("model_id", "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3"),
+                        contrast=leo_config.get("contrast", 3.5),
                         init_strength=leo_config.get("init_strength", 0.35),
                         width=576,
                         height=1024,

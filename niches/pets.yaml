@@ -169,8 +169,8 @@ visuals:
   # Leonardo.ai settings for reference-image consistency
   leonardo:
     provider: "leonardo"
-    model_id: "6b645e3a-d64f-4341-a6d8-7a3690fbf042"  # Leonardo Phoenix
-    guidance_scale: 7
+    model_id: "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3"  # Leonardo Phoenix 1.0
+    contrast: 3.5
     init_strength: 0.35
     num_images: 1
 
