@@ -15,6 +15,36 @@ from .niche import load_niche, get_script_context, get_visual_context, get_visua
 from .research import research_topic
 
 
+def _fallback_draft(news: str) -> dict:
+    """Safe fallback draft when JSON parsing completely fails."""
+    return {
+        "script": (
+            "Shh... Otto has a bedtime secret to share with you tonight. "
+            "Otto never goes anywhere without Kobi. Not to his cozy bed. "
+            "Not to his favorite window. Wherever Otto goes, Kobi goes too. "
+            "Because that is what love looks like. Love holds on gently. "
+            "You are enough. You are loved. You are magic. Now sleep. "
+            "Sweet dreams, little one. Visit us at brownstoryworld.com."
+        ),
+        "broll_prompts": [
+            "Small curly black Shih-Poo dog sleeping peacefully on soft bed with orange plush dragon toy, warm nightlight glow, dreamy atmosphere",
+            "Close-up of adorable black Shih-Poo with brown eyes cuddling orange stuffed dragon, soft pastel lighting, cozy bedroom",
+            "Dreamy scene of small black dog and plush dragon under blanket, stars visible through window, gentle warm lighting",
+        ],
+        "youtube_title": f"Otto and Kobi — {news[:50]} | OttoMissClub",
+        "youtube_description": (
+            f"{news}\n\n"
+            "Subscribe to OttoMissClub for sweet bedtime moments with Otto and Kobi!\n"
+            "Visit us: www.brownstoryworld.com\n"
+            "#OttoMissClub #BrownStoryWorld #OttoTheShihPoo"
+        ),
+        "youtube_tags": "OttoMissClub,BrownStoryWorld,Otto the Shih-Poo,bedtime stories for kids,lullaby for babies",
+        "instagram_caption": "",
+        "tiktok_caption": "",
+        "thumbnail_prompt": "cute black Shih-Poo dog sleeping with orange plush dragon, dreamy pastel background",
+    }
+
+
 def generate_draft(
     news: str,
     channel_context: str = "",
@@ -163,29 +193,47 @@ Output JSON exactly:
 
     # Fix common JSON issues from LLMs (unescaped newlines in strings)
     import re
-    raw = re.sub(r'(?<!\\)\n', ' ', raw)  # Replace unescaped newlines with spaces
-    raw = raw.replace('\r', ' ')
+    log(f"Raw LLM response (first 500 chars): {raw[:500]}")
 
+    # Try parsing as-is first
     try:
         draft = json.loads(raw)
     except json.JSONDecodeError:
-        # Try harder: fix unescaped quotes inside strings
-        raw_fixed = re.sub(r'(?<=": ")(.*?)(?="[,\}])', lambda m: m.group(0).replace('"', '\\"'), raw)
+        # Fix unescaped newlines and carriage returns
+        cleaned = raw.replace('\r\n', '\\n').replace('\r', '\\n').replace('\n', '\\n')
         try:
-            draft = json.loads(raw_fixed)
-        except json.JSONDecodeError as e:
-            log(f"JSON parse failed, attempting line-by-line fix: {e}")
-            # Last resort: extract fields manually
-            draft = {
-                "script": re.search(r'"script"\s*:\s*"(.*?)"', raw, re.DOTALL).group(1) if re.search(r'"script"\s*:\s*"', raw) else "Otto and Kobi wish you goodnight.",
-                "broll_prompts": ["Cute black Shih-Poo sleeping with orange plush dragon"] * 3,
-                "youtube_title": re.search(r'"youtube_title"\s*:\s*"(.*?)"', raw).group(1) if re.search(r'"youtube_title"\s*:\s*"', raw) else "Goodnight from Otto | OttoMissClub",
-                "youtube_description": "Sweet dreams from Otto and Kobi! Subscribe to OttoMissClub. Visit www.brownstoryworld.com",
-                "youtube_tags": "OttoMissClub,BrownStoryWorld,bedtime stories for kids,lullaby",
-                "instagram_caption": "",
-                "tiktok_caption": "",
-                "thumbnail_prompt": "cute black Shih-Poo dog sleeping peacefully",
-            }
+            draft = json.loads(cleaned)
+        except json.JSONDecodeError:
+            # Try extracting JSON object more aggressively
+            # Find the outermost { } pair with balanced braces
+            depth = 0
+            json_start = -1
+            json_end = -1
+            for i, c in enumerate(raw):
+                if c == '{':
+                    if depth == 0:
+                        json_start = i
+                    depth += 1
+                elif c == '}':
+                    depth -= 1
+                    if depth == 0:
+                        json_end = i + 1
+                        break
+
+            if json_start >= 0 and json_end > json_start:
+                json_str = raw[json_start:json_end]
+                # Replace actual newlines inside JSON strings
+                json_str = json_str.replace('\r\n', '\\n').replace('\r', '\\n').replace('\n', '\\n')
+                try:
+                    draft = json.loads(json_str)
+                except json.JSONDecodeError as e:
+                    log(f"JSON parse failed after cleanup: {e}")
+                    log(f"Cleaned JSON (first 300): {json_str[:300]}")
+                    # Last resort: generate a safe default
+                    draft = _fallback_draft(news)
+            else:
+                log(f"Could not find JSON object in response")
+                draft = _fallback_draft(news)
 
     # Validate and sanitize LLM output fields
     expected_str_fields = [
