@@ -83,7 +83,7 @@ def cmd_produce(args):
 
     # B-roll
     if force or not state.is_done("broll"):
-        frames = generate_broll(draft.get("broll_prompts", ["Cinematic landscape"] * 3), work_dir)
+        frames = generate_broll(draft.get("broll_prompts", ["Cinematic landscape"] * 3), work_dir, niche=niche_name)
         state.complete_stage("broll", {"frames": [str(f) for f in frames]})
     else:
         log("Skipping b-roll (already done)")

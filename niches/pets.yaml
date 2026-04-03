@@ -1,0 +1,231 @@
+name: pets
+display_name: "Otto the Shih-Poo — Pet Life & Adventures"
+description: "For channels starring Otto, a curly black Shih-Poo, and his plush dragon buddy Kobi."
+
+# Character reference — used by Leonardo.ai image-to-image pipeline
+character:
+  name: "Otto"
+  breed: "black Shih-Poo (Shih Tzu × Poodle mix)"
+  appearance: "small curly-haired black dog with brown eyes, fluffy dark coat, compact build"
+  sidekick: "Kobi — an orange/pink plush dragon stuffed animal, Otto's favorite toy"
+  reference_images:
+    - "references/otto_with_kobi.png"
+    - "references/otto_standing.png"
+  personality: "playful, curious, loves his plush dragon Kobi, cozy beds, and treats"
+
+# ─────────────────────────────────────────────────────
+# Script Intelligence
+# ─────────────────────────────────────────────────────
+script:
+  tone: "warm, funny, wholesome — like narrating your dog's inner monologue"
+  pacing: "upbeat but not rushed, comedic timing matters, pause for cute moments"
+  perspective: "first person as Otto's owner, or playful third-person narration of Otto's thoughts"
+  word_count: "120 to 150"
+  sentence_style: "short, punchy, playful. Mix humor with heart. End on an aww moment."
+
+  hooks:
+    - id: inner_monologue
+      template: "If Otto could talk, this is exactly what he'd say about {topic}."
+      when: "relatable pet behavior that every dog owner recognizes"
+    - id: caught_in_the_act
+      template: "I left Otto alone for 5 minutes. This is what I came back to."
+      when: "mischief, mess, or unexpected behavior"
+    - id: dramatic_reaction
+      template: "Otto just discovered {thing} and his reaction is priceless."
+      when: "dog reacting to something new — food, toy, sound, animal"
+    - id: day_in_the_life
+      template: "A day in the life of Otto — the most spoiled Shih-Poo on the internet."
+      when: "routine content, daily life, morning/evening"
+    - id: challenge
+      template: "I tried {challenge} with Otto. It did NOT go as planned."
+      when: "dog challenge, trick training, obstacle course"
+    - id: versus
+      template: "Otto vs {opponent}. Who wins? You already know."
+      when: "dog vs toy, dog vs mirror, dog vs vacuum, dog vs cat"
+    - id: otto_and_kobi
+      template: "Otto and his dragon Kobi are at it again. You won't believe this."
+      when: "content featuring Otto with his plush dragon toy Kobi"
+    - id: tip_hook
+      template: "Every Shih-Poo owner needs to know this about {topic}."
+      when: "breed-specific care tips, grooming, training"
+    - id: storytime
+      template: "The story of how Otto {action} is the funniest thing you'll see today."
+      when: "funny anecdote or memorable moment"
+
+  cta_variants:
+    - "Follow for daily Otto content."
+    - "Subscribe for more Otto and Kobi adventures."
+    - "Drop a paw emoji if your dog does this too."
+    - "Comment your dog's name below."
+    - "Follow if Otto made you smile today."
+
+  forbidden_phrases:
+    - "like and subscribe"
+    - "smash that bell"
+    - "what's up guys"
+    - "without further ado"
+    - "in this video"
+    - "hey everyone"
+    - "click the link"
+
+  structure:
+    opening: "Hook in first 2 seconds with Otto doing something cute/funny. No intro, straight into the moment."
+    middle: "Build the story or gag. 2-3 beats of escalation. Mix narration with implied dog reactions. Feature Kobi the dragon when relevant."
+    closing: "Payoff moment (the punchline, the cute climax). Then soft CTA. Always end on warmth."
+
+# ─────────────────────────────────────────────────────
+# Visual Intelligence
+# ─────────────────────────────────────────────────────
+visuals:
+  style: "warm, soft lighting, cozy indoor scenes and sunny outdoor settings"
+  mood: "wholesome, heartwarming, playful, occasionally dramatic for comedy"
+  color_palette: ["#FFF8F0", "#FFD6A5", "#C9B99A", "#5C4033", "#1A1A1A"]
+
+  subjects:
+    prefer:
+      - "small curly black Shih-Poo dog on a cozy bed with an orange plush dragon toy"
+      - "black Shih-Poo playing in a sunny park"
+      - "close-up of curly black dog with expressive brown eyes"
+      - "small black dog cuddling an orange stuffed dragon"
+      - "black doodle dog wearing a cute bandana"
+      - "curly-haired black dog investigating a treat or toy"
+      - "adorable black Shih-Poo giving puppy eyes"
+      - "cozy scene of small black dog sleeping curled up with plush dragon"
+    avoid:
+      - "generic stock photo dogs"
+      - "aggressive or scary dog imagery"
+      - "clinical veterinary settings"
+      - "low quality or blurry pet photos"
+      - "dogs of completely different breeds (unless comparing)"
+
+  prompt_suffix: "small curly-haired black Shih-Poo dog, warm lighting, soft focus background, adorable, photorealistic, 8K detail, cozy atmosphere"
+
+  # Leonardo.ai settings for reference-image consistency
+  leonardo:
+    provider: "leonardo"
+    model_id: "aa77f04e-83f0-4631-a13b-5ab51bb5e990"  # Leonardo Kino XL
+    guidance_scale: 7
+    init_strength: 0.35
+    num_images: 1
+
+# ─────────────────────────────────────────────────────
+# Voice Intelligence
+# ─────────────────────────────────────────────────────
+voice:
+  pace: "moderate, approximately 140 words per minute with natural pauses for comedic timing"
+  energy: "warm, friendly, slightly playful — like talking to your best friend about your dog"
+  style: "think wholesome pet vlogger, genuine and enthusiastic without being over the top"
+
+  suggested_voices:
+    edge_tts:
+      en: "en-US-JennyNeural"
+      hi: "hi-IN-SwaraNeural"
+    elevenlabs:
+      voice_id: "EXAVITQu4vr4xnSDxMaL"  # Sarah — warm, friendly
+      settings:
+        stability: 0.5
+        similarity_boost: 0.75
+        style: 0.4
+
+# ─────────────────────────────────────────────────────
+# Caption Intelligence
+# ─────────────────────────────────────────────────────
+captions:
+  highlight_color: "#FFD6A5"
+  text_color: "#FFFFFF"
+  font_family: "Arial"
+  font_size: 72
+  font_weight: "bold"
+  position: "lower_third"
+  background: "semi_transparent_dark"
+  words_per_group: 3
+
+# ─────────────────────────────────────────────────────
+# Music Intelligence
+# ─────────────────────────────────────────────────────
+music:
+  mood: "happy, lighthearted ukulele or piano, playful, no lyrics"
+  energy: "medium-high"
+  tags: ["happy", "upbeat", "cute", "playful", "ukulele", "acoustic", "wholesome"]
+  duck_volume_speech: 0.10
+  duck_volume_gap: 0.20
+
+# ─────────────────────────────────────────────────────
+# Thumbnail Intelligence
+# ─────────────────────────────────────────────────────
+thumbnail:
+  style: "bright background, Otto front and center, bold colorful text, expressive dog face"
+  text_color: "#FFFFFF"
+  accent_color: "#FFD6A5"
+  text_position: "top_center"
+  max_words: 4
+  font_style: "bold rounded sans serif"
+  guidelines:
+    - "Otto's face should take up at least 50% of the thumbnail"
+    - "Use bright warm colors — yellow, orange, cream"
+    - "Text should be 4 words max with emoji optional"
+    - "Exaggerated expressions or funny poses perform best"
+    - "Add subtle drop shadow behind text for readability"
+
+# ─────────────────────────────────────────────────────
+# Topic Discovery
+# ─────────────────────────────────────────────────────
+discovery:
+  reddit:
+    subreddits: ["dogs", "rarepuppers", "aww", "shihpoo", "Shihtzu", "poodles", "WhatsWrongWithYourDog"]
+  rss:
+    feeds:
+      - "https://www.akc.org/feed/"
+      - "https://www.rover.com/blog/feed/"
+  google_trends:
+    category: ""
+    geo: ""
+
+# ─────────────────────────────────────────────────────
+# Content Calendar — 7 rotating daily themes
+# ─────────────────────────────────────────────────────
+daily_themes:
+  monday:
+    theme: "Motivation Monday"
+    topics:
+      - "Otto's morning routine — the most dramatic wake-up ever"
+      - "How Otto motivates me to go on walks"
+      - "Monday energy vs Otto's energy"
+  tuesday:
+    theme: "Training Tuesday"
+    topics:
+      - "Teaching Otto a new trick"
+      - "Otto's smartest moments caught on camera"
+      - "Things Otto has learned this month"
+  wednesday:
+    theme: "Wacky Wednesday"
+    topics:
+      - "Otto vs the vacuum cleaner"
+      - "Otto's weirdest habits explained"
+      - "Things Otto does that make no sense"
+      - "Otto tries to hide Kobi the dragon from me"
+  thursday:
+    theme: "Throwback Thursday"
+    topics:
+      - "Otto as a puppy vs now"
+      - "The day we brought Otto home"
+      - "Otto and Kobi's origin story — how he chose his dragon"
+  friday:
+    theme: "Fun Friday"
+    topics:
+      - "Otto reviews his new toy"
+      - "Otto's favorite treats ranked"
+      - "Otto's playdate adventures"
+      - "Otto introduces Kobi to a new friend"
+  saturday:
+    theme: "Storytime Saturday"
+    topics:
+      - "The time Otto escaped the yard"
+      - "Otto's funniest vet visit"
+      - "Why Otto carries Kobi everywhere he goes"
+  sunday:
+    theme: "Self-Care Sunday"
+    topics:
+      - "Otto's spa day — grooming a Shih-Poo"
+      - "Otto's favorite nap spots ranked"
+      - "Sunday cuddles with Otto and Kobi"

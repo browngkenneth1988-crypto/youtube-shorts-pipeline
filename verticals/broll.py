@@ -1,4 +1,9 @@
-"""Gemini Imagen b-roll generation + Ken Burns animation."""
+"""B-roll generation + Ken Burns animation.
+
+Supports multiple image providers:
+- Gemini Imagen (default, free tier)
+- Leonardo.ai (reference-image-aware, keeps character consistent)
+"""
 
 import base64
 from pathlib import Path
@@ -8,6 +13,7 @@ from PIL import Image
 
 from .config import VIDEO_WIDTH, VIDEO_HEIGHT, get_gemini_key, run_cmd
 from .log import log
+from .niche import load_niche, NICHES_DIR
 from .retry import with_retry
 
 
@@ -51,31 +57,81 @@ def _fallback_frame(i: int, out_dir: Path) -> Path:
     return path
 
 
-def generate_broll(prompts: list, out_dir: Path) -> list[Path]:
-    """Generate 3 b-roll frames via Gemini Imagen, with fallback."""
-    api_key = get_gemini_key()
+def _resize_to_portrait(out_path: Path):
+    """Resize/crop image to 9:16 portrait format."""
+    img = Image.open(out_path).convert("RGB")
+    target_w, target_h = VIDEO_WIDTH, VIDEO_HEIGHT
+    orig_w, orig_h = img.size
+    scale = max(target_w / orig_w, target_h / orig_h)
+    new_w, new_h = int(orig_w * scale), int(orig_h * scale)
+    img = img.resize((new_w, new_h), Image.LANCZOS)
+    left = (new_w - target_w) // 2
+    top = (new_h - target_h) // 2
+    img = img.crop((left, top, left + target_w, top + target_h))
+    img.save(out_path)
+
+
+def _get_reference_image(niche_name: str) -> Path | None:
+    """Get the first available reference image for a niche's character."""
+    profile = load_niche(niche_name)
+    character = profile.get("character", {})
+    ref_images = character.get("reference_images", [])
+    project_root = NICHES_DIR.parent
+
+    for ref_path in ref_images:
+        full_path = project_root / ref_path
+        if full_path.exists():
+            return full_path
+    return None
+
+
+def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list[Path]:
+    """Generate 3 b-roll frames, with provider selection based on niche.
+
+    If the niche has Leonardo.ai config and reference images, uses
+    Leonardo for character-consistent generation. Falls back to Gemini.
+    """
+    profile = load_niche(niche)
+    leo_config = profile.get("visuals", {}).get("leonardo", {})
+    use_leonardo = leo_config.get("provider") == "leonardo"
+    reference_image = _get_reference_image(niche) if use_leonardo else None
+
     frames = []
 
     for i, prompt in enumerate(prompts[:3]):
         out_path = out_dir / f"broll_{i}.png"
+
+        # Try Leonardo.ai first if configured with reference images
+        if use_leonardo and reference_image:
+            try:
+                from .leonardo import generate_image_leonardo, get_leonardo_key
+                api_key = get_leonardo_key()
+                if api_key:
+                    log(f"Generating b-roll frame {i+1}/3 via Leonardo.ai (ref: {reference_image.name})...")
+                    generate_image_leonardo(
+                        prompt=prompt,
+                        output_path=out_path,
+                        api_key=api_key,
+                        reference_image_path=reference_image,
+                        model_id=leo_config.get("model_id", "aa77f04e-83f0-4631-a13b-5ab51bb5e990"),
+                        guidance_scale=leo_config.get("guidance_scale", 7),
+                        init_strength=leo_config.get("init_strength", 0.35),
+                        width=576,
+                        height=1024,
+                    )
+                    _resize_to_portrait(out_path)
+                    frames.append(out_path)
+                    continue
+            except Exception as e:
+                log(f"Leonardo frame {i+1} failed: {e} — falling back to Gemini")
+
+        # Gemini Imagen fallback
         log(f"Generating b-roll frame {i+1}/3 via Gemini Imagen...")
-
         try:
+            api_key = get_gemini_key()
             _generate_image_gemini(prompt, out_path, api_key)
-
-            # Resize/crop to 9:16 portrait
-            img = Image.open(out_path).convert("RGB")
-            target_w, target_h = VIDEO_WIDTH, VIDEO_HEIGHT
-            orig_w, orig_h = img.size
-            scale = max(target_w / orig_w, target_h / orig_h)
-            new_w, new_h = int(orig_w * scale), int(orig_h * scale)
-            img = img.resize((new_w, new_h), Image.LANCZOS)
-            left = (new_w - target_w) // 2
-            top = (new_h - target_h) // 2
-            img = img.crop((left, top, left + target_w, top + target_h))
-            img.save(out_path)
+            _resize_to_portrait(out_path)
             frames.append(out_path)
-
         except Exception as e:
             log(f"Frame {i+1} failed: {e} — using fallback")
             frames.append(_fallback_frame(i, out_dir))

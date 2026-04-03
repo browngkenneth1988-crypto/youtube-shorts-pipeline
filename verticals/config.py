@@ -202,6 +202,10 @@ def get_claude_backend() -> str:
     )
 
 
+def get_leonardo_key() -> str:
+    return _get_key("LEONARDO_API_KEY")
+
+
 def get_elevenlabs_key() -> str:
     return _get_key("ELEVENLABS_API_KEY")
 
@@ -269,10 +273,16 @@ def run_setup():
     if key:
         config["GEMINI_API_KEY"] = key
 
+    print("\n4. Leonardo.ai API key (optional — for character-consistent pet/person visuals)")
+    print("   Get yours at: https://app.leonardo.ai/api-access")
+    key = input("   LEONARDO_API_KEY (press Enter to skip): ").strip()
+    if key:
+        config["LEONARDO_API_KEY"] = key
+
     save_config(config)
     print(f"\n  Config saved to {CONFIG_FILE}")
 
-    print("\n4. YouTube OAuth setup")
+    print("\n5. YouTube OAuth setup")
     print("   You'll need a client_secret.json from Google Cloud Console.")
     print("   See references/setup.md for step-by-step instructions.")
     run_oauth = input("\n   Run YouTube OAuth now? (y/N): ").strip().lower()
