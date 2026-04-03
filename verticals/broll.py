@@ -110,8 +110,8 @@ def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list
     for i, prompt in enumerate(prompts[:3]):
         out_path = out_dir / f"broll_{i}.png"
 
-        # Try Leonardo.ai first if configured with reference images
-        if use_leonardo and reference_image:
+        # Try Leonardo.ai first if configured (with or without reference images)
+        if use_leonardo:
             try:
                 from .leonardo import generate_image_leonardo, get_leonardo_key
                 api_key = get_leonardo_key()

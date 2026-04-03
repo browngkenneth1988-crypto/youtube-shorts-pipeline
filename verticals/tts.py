@@ -241,11 +241,12 @@ def generate_voiceover(
                 log("Falling back to ElevenLabs...")
                 provider = "elevenlabs"
             else:
-                log("Falling back to pyttsx3 (Windows TTS)...")
-                try:
+                import sys
+                if sys.platform == "win32":
+                    log("Falling back to pyttsx3 (Windows TTS)...")
                     return _generate_pyttsx3(script, out_dir)
-                except Exception as e2:
-                    log(f"pyttsx3 failed: {e2}, trying macOS say...")
+                else:
+                    log("Falling back to macOS say...")
                     return _generate_say(script, out_dir)
 
     if provider == "elevenlabs":
@@ -257,10 +258,18 @@ def generate_voiceover(
             )
         except Exception as e:
             log(f"ElevenLabs failed: {e}")
-            log("Falling back to macOS say...")
-            return _generate_say(script, out_dir)
+            import sys
+            if sys.platform == "win32":
+                log("Falling back to pyttsx3 (Windows TTS)...")
+                return _generate_pyttsx3(script, out_dir)
+            else:
+                log("Falling back to macOS say...")
+                return _generate_say(script, out_dir)
 
     if provider == "say":
+        import sys
+        if sys.platform == "win32":
+            return _generate_pyttsx3(script, out_dir)
         return _generate_say(script, out_dir)
 
     raise ValueError(f"Unknown TTS provider: {provider}")
