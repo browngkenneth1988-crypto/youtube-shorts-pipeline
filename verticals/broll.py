@@ -19,16 +19,15 @@ from .retry import with_retry
 
 @with_retry(max_retries=3, base_delay=2.0)
 def _generate_image_gemini(prompt: str, output_path: Path, api_key: str):
-    """Generate image via Google Imagen 3 API (free tier compatible)."""
+    """Generate image via Gemini's image generation capability."""
     url = (
         "https://generativelanguage.googleapis.com/v1beta"
-        "/models/imagen-3.0-generate-002:predict"
+        "/models/gemini-2.0-flash-preview-image-generation:generateContent"
     )
     body = {
-        "instances": [{"prompt": prompt}],
-        "parameters": {
-            "sampleCount": 1,
-            "aspectRatio": "9:16",
+        "contents": [{"parts": [{"text": f"Generate an image: {prompt}"}]}],
+        "generationConfig": {
+            "responseModalities": ["TEXT", "IMAGE"],
         },
     }
     r = requests.post(
@@ -40,21 +39,16 @@ def _generate_image_gemini(prompt: str, output_path: Path, api_key: str):
             detail = r.json().get("error", {}).get("message", r.text[:200])
         except Exception:
             detail = r.text[:200]
-        raise RuntimeError(f"Imagen API {r.status_code}: {detail}")
+        raise RuntimeError(f"Gemini Image API {r.status_code}: {detail}")
     data = r.json()
-    # Extract image from predictions
-    predictions = data.get("predictions", [])
-    if predictions and "bytesBase64Encoded" in predictions[0]:
-        img_b64 = predictions[0]["bytesBase64Encoded"]
-        output_path.write_bytes(base64.b64decode(img_b64))
-        return
-    # Fallback: try Gemini multimodal format
-    for part in data.get("candidates", [{}])[0].get("content", {}).get("parts", []):
-        if "inlineData" in part:
-            img_b64 = part["inlineData"]["data"]
-            output_path.write_bytes(base64.b64decode(img_b64))
-            return
-    raise RuntimeError("No image in Imagen response")
+    # Extract image from response parts
+    for candidate in data.get("candidates", []):
+        for part in candidate.get("content", {}).get("parts", []):
+            if "inlineData" in part:
+                img_b64 = part["inlineData"]["data"]
+                output_path.write_bytes(base64.b64decode(img_b64))
+                return
+    raise RuntimeError("No image in Gemini response")
 
 
 def _fallback_frame(i: int, out_dir: Path) -> Path:
@@ -116,7 +110,8 @@ def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list
                 from .leonardo import generate_image_leonardo, get_leonardo_key
                 api_key = get_leonardo_key()
                 if api_key:
-                    log(f"Generating b-roll frame {i+1}/3 via Leonardo.ai (ref: {reference_image.name})...")
+                    ref_label = reference_image.name if reference_image else "none"
+                    log(f"Generating b-roll frame {i+1}/3 via Leonardo.ai (ref: {ref_label})...")
                     generate_image_leonardo(
                         prompt=prompt,
                         output_path=out_path,
