@@ -38,8 +38,8 @@ character:
   appearance: "small curly-haired black dog with brown eyes, fluffy dark coat, compact build"
   sidekick: "Kobi — a soft plush dragon stuffed animal, entirely orange/coral on the outside with a lighter peach/cream belly. Has two small orange bat-like wings, two tiny tan horns on top, round brown eyes, a sweet stitched smile, and stubby orange feet with peach pads. NO blue, NO green, NO spines, NO fins on his back — Kobi is smooth and soft. He looks like a Jellycat-style plushie. Otto's favorite toy and bedtime companion"
   reference_images:
-    - "references/otto_with_kobi.png"
     - "references/kobi_solo.png"
+    - "references/otto_with_kobi.png"
   personality: "gentle, sleepy, cuddly, loves his plush dragon Kobi, cozy beds, and bedtime routines"
 
 # ─────────────────────────────────────────────────────
@@ -171,7 +171,7 @@ visuals:
     provider: "leonardo"
     model_id: "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3"  # Leonardo Phoenix 1.0
     contrast: 3.5
-    init_strength: 0.35
+    init_strength: 0.65
     num_images: 1
 
 # ─────────────────────────────────────────────────────

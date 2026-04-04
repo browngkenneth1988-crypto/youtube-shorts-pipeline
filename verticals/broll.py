@@ -147,18 +147,19 @@ def burn_quote_on_frame(img_path: Path, quote: str, position: str = "center"):
     log(f"Quote burned onto {img_path.name}")
 
 
-def _get_reference_image(niche_name: str) -> Path | None:
-    """Get the first available reference image for a niche's character."""
+def _get_reference_images(niche_name: str) -> list[Path]:
+    """Get all available reference images for a niche's character."""
     profile = load_niche(niche_name)
     character = profile.get("character", {})
     ref_images = character.get("reference_images", [])
     project_root = NICHES_DIR.parent
 
+    found = []
     for ref_path in ref_images:
         full_path = project_root / ref_path
         if full_path.exists():
-            return full_path
-    return None
+            found.append(full_path)
+    return found
 
 
 def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list[Path]:
@@ -170,12 +171,15 @@ def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list
     profile = load_niche(niche)
     leo_config = profile.get("visuals", {}).get("leonardo", {})
     use_leonardo = leo_config.get("provider") == "leonardo"
-    reference_image = _get_reference_image(niche) if use_leonardo else None
+    ref_images = _get_reference_images(niche) if use_leonardo else []
 
     frames = []
 
     for i, prompt in enumerate(prompts[:3]):
         out_path = out_dir / f"broll_{i}.png"
+
+        # Pick reference image — alternate between available refs for variety
+        reference_image = ref_images[i % len(ref_images)] if ref_images else None
 
         # Try Leonardo.ai first if configured (with or without reference images)
         if use_leonardo:
