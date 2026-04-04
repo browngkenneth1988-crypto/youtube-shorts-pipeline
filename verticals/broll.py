@@ -6,10 +6,11 @@ Supports multiple image providers:
 """
 
 import base64
+import textwrap
 from pathlib import Path
 
 import requests
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from .config import VIDEO_WIDTH, VIDEO_HEIGHT, get_gemini_key, run_cmd
 from .log import log
@@ -72,6 +73,76 @@ def _resize_to_portrait(out_path: Path):
     top = (new_h - target_h) // 2
     img = img.crop((left, top, left + target_w, top + target_h))
     img.save(out_path)
+
+
+def burn_quote_on_frame(img_path: Path, quote: str, position: str = "center"):
+    """Burn an inspirational quote as visible text onto a b-roll frame.
+
+    Adds a semi-transparent dark overlay behind the text for readability,
+    then renders the quote in a warm, gentle font style.
+    """
+    img = Image.open(img_path).convert("RGBA")
+    w, h = img.size
+
+    # Create overlay for text background
+    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+
+    # Try to load a nice font, fall back to default
+    font_size = w // 14  # Responsive to image width
+    try:
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except OSError:
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+        except OSError:
+            font = ImageFont.load_default()
+
+    # Wrap text to fit image width (with padding)
+    max_chars = max(15, w // (font_size // 2))
+    lines = textwrap.wrap(quote, width=max_chars)
+    text_block = "\n".join(lines)
+
+    # Calculate text dimensions
+    bbox = draw.multiline_textbbox((0, 0), text_block, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+
+    # Position: center of image (vertically centered or lower third)
+    padding = 40
+    if position == "lower_third":
+        text_y = h - text_h - padding * 3
+    else:
+        text_y = (h - text_h) // 2
+
+    text_x = (w - text_w) // 2
+
+    # Draw semi-transparent dark rectangle behind text
+    rect_margin = 30
+    draw.rounded_rectangle(
+        [
+            text_x - rect_margin,
+            text_y - rect_margin,
+            text_x + text_w + rect_margin,
+            text_y + text_h + rect_margin,
+        ],
+        radius=20,
+        fill=(0, 0, 0, 140),
+    )
+
+    # Draw the quote text in warm white/gold
+    draw.multiline_text(
+        (text_x, text_y),
+        text_block,
+        font=font,
+        fill=(255, 248, 240, 255),  # Warm white
+        align="center",
+    )
+
+    # Composite overlay onto image
+    result = Image.alpha_composite(img, overlay).convert("RGB")
+    result.save(img_path)
+    log(f"Quote burned onto {img_path.name}")
 
 
 def _get_reference_image(niche_name: str) -> Path | None:

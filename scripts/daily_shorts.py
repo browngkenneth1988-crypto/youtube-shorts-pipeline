@@ -183,6 +183,16 @@ def run_daily_pipeline(
         work_dir,
         niche=niche,
     )
+
+    # Burn inspirational quote onto the middle frame
+    children_quotes = profile.get("children_quotes", [])
+    if children_quotes and len(frames) >= 2:
+        from verticals.broll import burn_quote_on_frame
+        quote = random.choice(children_quotes)
+        log(f"Burning quote onto frame: \"{quote}\"")
+        burn_quote_on_frame(frames[1], quote, position="center")
+        draft["displayed_quote"] = quote
+
     state.complete_stage("broll", {"frames": [str(f) for f in frames]})
 
     # Voiceover
