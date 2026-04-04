@@ -36,7 +36,7 @@ character:
   name: "Otto"
   breed: "black Shih-Poo (Shih Tzu × Poodle mix)"
   appearance: "small curly-haired black dog with brown eyes, fluffy dark coat, compact build"
-  sidekick: "Kobi — an orange/pink plush dragon stuffed animal, Otto's favorite toy and bedtime companion"
+  sidekick: "Kobi — a small solid orange/peach plush dragon stuffed animal with tiny wings, NO blue fins, NO blue spines, NO blue anywhere. Kobi is entirely orange/peach colored. Otto's favorite toy and bedtime companion"
   reference_images:
     - "references/otto_with_kobi.png"
     - "references/otto_standing.png"
@@ -164,7 +164,7 @@ visuals:
       - "clinical or sterile environments"
       - "anything unsuitable for young children"
 
-  prompt_suffix: "small curly-haired black Shih-Poo dog with an orange plush dragon toy named Kobi, dreamy soft lighting, pastel colors, cozy bedtime atmosphere, gentle and magical, children's storybook quality, warm and safe feeling. IMPORTANT: the dragon toy must be orange colored, never blue or any other color"
+  prompt_suffix: "small curly-haired black Shih-Poo dog with a solid orange/peach plush dragon toy named Kobi (NO blue, NO blue fins, NO blue spines — Kobi is entirely orange/peach with small wings), dreamy soft lighting, pastel colors, cozy bedtime atmosphere, gentle and magical, children's storybook quality, warm and safe feeling"
 
   # Leonardo.ai settings for reference-image consistency
   leonardo:
