@@ -149,13 +149,13 @@ visuals:
   subjects:
     prefer:
       - "small curly black Shih-Poo dog sleeping peacefully on a soft bed"
-      - "black Shih-Poo cuddling an orange plush dragon under a blanket"
-      - "dreamy nighttime scene with a small black dog by a window with stars"
-      - "cozy bedroom with warm nightlight and a sleeping curly black dog"
-      - "small black dog and plush dragon toy on a cloud-like bed"
-      - "gentle watercolor style of a curly black puppy with stars and moon"
-      - "close-up of peaceful sleeping black Shih-Poo with soft bokeh lights"
-      - "magical bedtime scene with a small black dog and fireflies"
+      - "black Shih-Poo cuddling an orange plush dragon toy under a blanket"
+      - "dreamy nighttime scene with a small black dog and an orange stuffed dragon toy by a window with stars"
+      - "cozy bedroom with warm nightlight and a sleeping curly black dog next to an orange plush dragon"
+      - "small black dog and orange plush dragon toy on a cloud-like bed"
+      - "gentle watercolor style of a curly black puppy with an orange dragon plushie, stars and moon"
+      - "close-up of peaceful sleeping black Shih-Poo with orange dragon toy, soft bokeh lights"
+      - "magical bedtime scene with a small black dog and an orange stuffed dragon among fireflies"
     avoid:
       - "bright harsh lighting"
       - "scary or dark imagery"
@@ -164,7 +164,7 @@ visuals:
       - "clinical or sterile environments"
       - "anything unsuitable for young children"
 
-  prompt_suffix: "small curly-haired black Shih-Poo dog, dreamy soft lighting, pastel colors, cozy bedtime atmosphere, gentle and magical, children's storybook quality, warm and safe feeling"
+  prompt_suffix: "small curly-haired black Shih-Poo dog with an orange plush dragon toy named Kobi, dreamy soft lighting, pastel colors, cozy bedtime atmosphere, gentle and magical, children's storybook quality, warm and safe feeling. IMPORTANT: the dragon toy must be orange colored, never blue or any other color"
 
   # Leonardo.ai settings for reference-image consistency
   leonardo:
