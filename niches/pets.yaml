@@ -36,10 +36,10 @@ character:
   name: "Otto"
   breed: "black Shih-Poo (Shih Tzu × Poodle mix)"
   appearance: "small curly-haired black dog with brown eyes, fluffy dark coat, compact build"
-  sidekick: "Kobi — a small solid orange/peach plush dragon stuffed animal with tiny wings, NO blue fins, NO blue spines, NO blue anywhere. Kobi is entirely orange/peach colored. Otto's favorite toy and bedtime companion"
+  sidekick: "Kobi — a soft plush dragon stuffed animal, entirely orange/coral on the outside with a lighter peach/cream belly. Has two small orange bat-like wings, two tiny tan horns on top, round brown eyes, a sweet stitched smile, and stubby orange feet with peach pads. NO blue, NO green, NO spines, NO fins on his back — Kobi is smooth and soft. He looks like a Jellycat-style plushie. Otto's favorite toy and bedtime companion"
   reference_images:
     - "references/otto_with_kobi.png"
-    - "references/otto_standing.png"
+    - "references/kobi_solo.png"
   personality: "gentle, sleepy, cuddly, loves his plush dragon Kobi, cozy beds, and bedtime routines"
 
 # ─────────────────────────────────────────────────────
