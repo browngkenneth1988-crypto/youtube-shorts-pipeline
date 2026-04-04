@@ -111,7 +111,7 @@ def burn_quote_on_frame(img_path: Path, quote: str, position: str = "center"):
     # Position the text
     padding = 40
     if position == "top":
-        text_y = padding * 2
+        text_y = padding * 4
     elif position == "lower_third":
         text_y = h - text_h - padding * 3
     else:
