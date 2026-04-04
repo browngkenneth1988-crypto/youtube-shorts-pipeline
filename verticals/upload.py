@@ -38,14 +38,14 @@ def upload_to_youtube(
 
     body = {
         "snippet": {
-            "title": draft.get("youtube_title", draft["news"])[:100],
+            "title": (draft.get("youtube_title", draft["news"])[:90] + " #Shorts"),
             "description": draft.get("youtube_description", ""),
             "tags": draft.get("youtube_tags", "").split(","),
             "categoryId": "20",
             "defaultLanguage": lang,
             "defaultAudioLanguage": lang,
         },
-        "status": {"privacyStatus": "private", "selfDeclaredMadeForKids": False},
+        "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": True},
     }
 
     media = MediaFileUpload(str(video_path), chunksize=-1, resumable=True)
