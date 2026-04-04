@@ -190,7 +190,7 @@ def run_daily_pipeline(
         from verticals.broll import burn_quote_on_frame
         quote = random.choice(children_quotes)
         log(f"Burning quote onto frame: \"{quote}\"")
-        burn_quote_on_frame(frames[1], quote, position="center")
+        burn_quote_on_frame(frames[1], quote, position="top")
         draft["displayed_quote"] = quote
 
     state.complete_stage("broll", {"frames": [str(f) for f in frames]})
