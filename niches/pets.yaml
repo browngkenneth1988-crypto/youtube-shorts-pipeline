@@ -214,8 +214,8 @@ music:
   mood: "gentle lullaby, soft piano, music box, soothing strings, no lyrics or soft humming only"
   energy: "low"
   tags: ["lullaby", "sleep", "baby", "calming", "piano", "music box", "gentle", "bedtime", "soothing"]
-  duck_volume_speech: 0.08
-  duck_volume_gap: 0.15
+  duck_volume_speech: 0.35
+  duck_volume_gap: 0.55
 
   # Top lullaby styles to match (for music selection or generation)
   lullaby_references:
