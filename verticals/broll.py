@@ -89,7 +89,7 @@ def burn_quote_on_frame(img_path: Path, quote: str, position: str = "center"):
     draw = ImageDraw.Draw(overlay)
 
     # Try to load a nice font, fall back to default
-    font_size = w // 14  # Responsive to image width
+    font_size = w // 18  # Responsive to image width, smaller for better fit
     try:
         font = ImageFont.truetype("arial.ttf", font_size)
     except OSError:
@@ -98,8 +98,11 @@ def burn_quote_on_frame(img_path: Path, quote: str, position: str = "center"):
         except OSError:
             font = ImageFont.load_default()
 
-    # Wrap text to fit image width (with padding)
-    max_chars = max(15, w // (font_size // 2))
+    # Wrap text to fit image width (with generous padding)
+    side_padding = 50
+    usable_width = w - (side_padding * 2)
+    # Estimate chars per line based on font size
+    max_chars = max(12, usable_width // (font_size // 2 + 2))
     lines = textwrap.wrap(quote, width=max_chars)
     text_block = "\n".join(lines)
 
@@ -109,9 +112,9 @@ def burn_quote_on_frame(img_path: Path, quote: str, position: str = "center"):
     text_h = bbox[3] - bbox[1]
 
     # Position the text
-    padding = 40
+    padding = 50
     if position == "top":
-        text_y = padding * 4
+        text_y = padding * 3
     elif position == "lower_third":
         text_y = h - text_h - padding * 3
     else:
