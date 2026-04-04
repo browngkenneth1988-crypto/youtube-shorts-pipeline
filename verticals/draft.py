@@ -164,6 +164,11 @@ RULES:
 - Never use any of the NEVER USE phrases
 - B-roll prompts must follow the visual guidance (style, mood, preferred subjects)
 
+AEO/GEO OPTIMIZATION (important for AI search discovery):
+- youtube_title: Use a question or searchable phrase people ask AI assistants (e.g. "Best Bedtime Lullaby for Babies | Otto & Kobi" or "Calming Sleep Story for Kids"). Keep under 70 chars.
+- youtube_description: Start with a 1-2 sentence answer to the question in the title. Include keywords: lullaby, bedtime story, baby sleep, kids sleep music, calming, soothing. Write 3-4 sentences that AI search engines can quote as an answer.
+- youtube_tags: Include high-volume search terms like "lullaby for babies", "bedtime story for kids", "baby sleep music", "calming videos for toddlers"
+
 Output ONLY a valid JSON object, nothing else. Start with {{ and end with }}:
 {{
   "script": "...",
