@@ -1,0 +1,29 @@
+{
+  "script": "Why did Sam Altman just fire 200 safety researchers? The answer is wilder than you think.\n\nOpenAI just gutted its safety team — the people whose entire job is to make sure AI doesn't go catastrophically wrong.\n\nHere's the thing: this isn't happening in a vacuum. Models are getting more powerful every quarter. The capability curve is going vertical. And the safety team just got smaller.\n\nBut it gets worse. The people you fire don't disappear. They go to Anthropic, DeepMind, or start their own labs. You just redistributed your safety talent directly to competitors.\n\nWhat this signals is a clear priority shift. Speed over safety. Ship it now, figure out consequences later. That's the bet OpenAI is making.\n\nAnd if that bet is wrong — even once — the consequences aren't a bad product launch. They're something nobody has a playbook for.\n\nSubscribe if you want AI news that actually matters.",
+  "broll_prompts": [
+    "Extreme close-up of Python code on a dark terminal screen, ominous red error messages glowing in the syntax highlighting, background falling into soft blur, photorealistic, cinematic lighting, dark moody atmosphere, 8K detail, shallow depth of field. photorealistic, cinematic lighting, dark moody atmosphere, 8K detail, shallow depth of field",
+    "Abstract neural network visualization with glowing electric blue nodes, half the nodes blinking out and disappearing in sequence as if being deleted, near-black background, photorealistic, cinematic lighting, dark moody atmosphere, 8K detail, shallow depth of field. photorealistic, cinematic lighting, dark moody atmosphere, 8K detail, shallow depth of field",
+    "Long server room corridor lined with deep blue LED lighting casting hard shadows, a single door at the far end cracked open letting in a cold white light, foreboding and isolating composition, photorealistic, cinematic lighting, dark moody atmosphere, 8K detail, shallow depth of field. photorealistic, cinematic lighting, dark moody atmosphere, 8K detail, shallow depth of field"
+  ],
+  "youtube_title": "OpenAI Just Fired 200 Safety Researchers (This Is Bad)",
+  "youtube_description": "Sam Altman just mass-fired 200 safety researchers at OpenAI. Here's what this actually signals about the direction of the most powerful AI lab in the world — and why it should concern you.\n\nMore context in the pinned comment.\n\n#OpenAI #SamAltman #AINews #AISafety #TechNews",
+  "youtube_tags": "OpenAI,Sam Altman,AI safety,OpenAI layoffs,artificial intelligence,AI news,tech news,machine learning,AI researchers,AI regulation,OpenAI safety team",
+  "instagram_caption": "OpenAI just fired 200 safety researchers.\n\nModels keep getting more powerful. The safety team keeps getting smaller. That math doesn't work.\n\nThe people they fired don't vanish — they go straight to Anthropic, DeepMind, or build competing labs. OpenAI just funded its own competition.\n\nThis is a speed-over-safety bet. And if it's wrong even once, nobody has a playbook for what follows.\n\n#OpenAI #SamAltman #AISafety #AINews #TechNews #ArtificialIntelligence",
+  "tiktok_caption": "OpenAI fired 200 safety researchers and everyone should be talking about this #OpenAI #SamAltman #AISafety #AINews #TechNews",
+  "thumbnail_prompt": "Near-black background with dark gradient, bold high-contrast white text reading 'BIG MISTAKE' centered in upper frame, a single large glowing red warning triangle icon dominating the lower two-thirds, faint circuit board texture visible in the deep shadows, maximum contrast for mobile readability, photorealistic, cinematic lighting, dark moody atmosphere, 8K detail, shallow depth of field",
+  "news": "Sam Altman just mass-fired 200 safety researchers",
+  "research": "Topic: Sam Altman just mass-fired 200 safety researchers\n(No live research available — script must stay general.)",
+  "niche": "tech",
+  "platform": "shorts",
+  "job_id": "1775859744",
+  "_pipeline_state": {
+    "research": {
+      "status": "done",
+      "timestamp": "2026-04-10T22:23:25.153319+00:00"
+    },
+    "draft": {
+      "status": "done",
+      "timestamp": "2026-04-10T22:23:25.153342+00:00"
+    }
+  }
+}
