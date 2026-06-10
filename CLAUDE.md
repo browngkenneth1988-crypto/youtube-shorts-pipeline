@@ -19,7 +19,8 @@ with AI-generated b-roll, voiceover, burned-in captions, background music, and t
   google-auth, google-auth-oauthlib, openai-whisper, PyYAML, edge-tts
 - **Dev dependencies:** pytest, pytest-mock
 - **External tools required at runtime:** ffmpeg, ffprobe (video assembly), whisper (captions)
-- **No CI pipeline** — no GitHub Actions, no Dockerfile in repo yet
+- **CI:** GitHub Actions (`.github/workflows/ci.yml`) — runs pytest on Python 3.10/3.11/3.12
+  on push to main and all PRs
 - **No web UI in repo** — Gradio UI mentioned in README/CHANGELOG but code not present
 
 ## Architecture
@@ -120,8 +121,7 @@ Before pushing any change, run:
 1. **README drift:** README describes `providers/`, `stages/`, `ui/`, `docker-compose.yml`,
    `Dockerfile`, `notebooks/` directories that don't exist in the repo. The actual structure
    is flat under `verticals/`.
-2. **No CI:** No GitHub Actions workflow. Tests must be run manually.
-3. **No Docker:** Dockerfile and docker-compose.yml mentioned but not in repo.
+2. **No Docker:** Dockerfile and docker-compose.yml mentioned but not in repo.
 4. **No Gradio UI:** Web UI code not present despite README documentation.
 5. **voiceover.py is a shim:** Just re-exports from `tts.py`. Could be removed if
    all imports are updated.
