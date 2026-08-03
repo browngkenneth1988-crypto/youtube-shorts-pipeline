@@ -28,7 +28,7 @@ python -m verticals niches
 
 ## $0.00 mode
 
-python -m verticals run --topic "X" --niche tech --provider ollama --voice edge
+python -m verticals run --news "X" --niche tech --provider ollama --voice edge
 
 Docs: https://github.com/rushindrasinha/verticals
 Product: https://verticals.gg
