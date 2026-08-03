@@ -183,7 +183,7 @@ automatically (use `--force` to redo them).
 --discover           Pull a topic from the topic engine instead of --news
 --auto-pick          Let the LLM pick the best discovered topic
 --dry-run            Draft only, skip produce and upload
---force              Redo stages even if already completed
+--force              Redo stages even if already completed (produce/upload only)
 --verbose, -v        Debug logging
 ```
 
