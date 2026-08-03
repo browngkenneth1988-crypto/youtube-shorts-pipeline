@@ -1,6 +1,6 @@
 """Tests for verticals/llm.py — provider resolution and call routing."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -144,3 +144,130 @@ class TestOllamaAvailable:
     def test_unavailable_on_exception(self):
         with patch("requests.get", side_effect=OSError("refused")):
             assert llm._ollama_available() is False
+
+
+class TestCallClaude:
+    def test_cli_backend_delegates(self):
+        with patch("verticals.llm.get_claude_backend", return_value="cli"), \
+             patch("verticals.llm.call_claude_cli", return_value="cli-answer") as cli:
+            assert llm._call_claude("hi", 100) == "cli-answer"
+            cli.assert_called_once_with("hi", max_tokens=100)
+
+    def test_api_backend_calls_client(self):
+        client = MagicMock()
+        client.messages.create.return_value = MagicMock(content=[MagicMock(text="  api-answer  ")])
+        with patch("verticals.llm.get_claude_backend", return_value="api"), \
+             patch("verticals.llm.get_anthropic_client", return_value=client):
+            assert llm._call_claude("hi", 100) == "api-answer"
+        assert client.messages.create.call_args.kwargs["max_tokens"] == 100
+
+
+class TestCallGemini:
+    def test_missing_key_raises(self):
+        with patch("verticals.llm.get_gemini_key", return_value=""):
+            with pytest.raises(RuntimeError, match="GEMINI_API_KEY not set"):
+                llm._call_gemini("hi", 100)
+
+    def test_success_joins_parts(self):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Hello"}, {"text": "world"}]}}]
+        }
+        with patch("verticals.llm.get_gemini_key", return_value="k"), \
+             patch("requests.post", return_value=resp):
+            assert llm._call_gemini("hi", 100) == "Hello world"
+
+    def test_non_200_raises(self):
+        resp = MagicMock()
+        resp.status_code = 429
+        resp.text = "rate limited"
+        with patch("verticals.llm.get_gemini_key", return_value="k"), \
+             patch("requests.post", return_value=resp), \
+             patch("verticals.retry.time.sleep"):
+            with pytest.raises(RuntimeError, match="Gemini API 429"):
+                llm._call_gemini("hi", 100)
+
+    def test_empty_response_raises(self):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {"candidates": [{"content": {"parts": []}}]}
+        with patch("verticals.llm.get_gemini_key", return_value="k"), \
+             patch("requests.post", return_value=resp), \
+             patch("verticals.retry.time.sleep"):
+            with pytest.raises(RuntimeError, match="Empty response"):
+                llm._call_gemini("hi", 100)
+
+
+class TestCallOpenAI:
+    def test_missing_key_raises(self, monkeypatch):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        with patch("verticals.config.load_config", return_value={}):
+            with pytest.raises(RuntimeError, match="OPENAI_API_KEY not set"):
+                llm._call_openai("hi", 100)
+
+    def test_success_returns_content(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {"choices": [{"message": {"content": "  gpt answer  "}}]}
+        with patch("requests.post", return_value=resp):
+            assert llm._call_openai("hi", 100) == "gpt answer"
+
+    def test_non_200_raises(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
+        resp = MagicMock()
+        resp.status_code = 500
+        resp.text = "server error"
+        with patch("requests.post", return_value=resp), \
+             patch("verticals.retry.time.sleep"):
+            with pytest.raises(RuntimeError, match="OpenAI API 500"):
+                llm._call_openai("hi", 100)
+
+
+class TestCallOllama:
+    def _tags(self, models):
+        tags = MagicMock()
+        tags.json.return_value = {"models": [{"name": m} for m in models]}
+        return tags
+
+    def test_not_running_raises(self):
+        with patch("requests.get", side_effect=OSError("refused")), \
+             patch("verticals.retry.time.sleep"):
+            with pytest.raises(RuntimeError, match="Ollama not running"):
+                llm._call_ollama("hi")
+
+    def test_no_models_raises(self):
+        with patch("requests.get", return_value=self._tags([])), \
+             patch("verticals.retry.time.sleep"):
+            with pytest.raises(RuntimeError, match="No Ollama models"):
+                llm._call_ollama("hi")
+
+    def test_picks_preferred_model_and_returns_response(self):
+        post_resp = MagicMock()
+        post_resp.status_code = 200
+        post_resp.json.return_value = {"response": "  ollama answer  "}
+        with patch("requests.get", return_value=self._tags(["mistral", "llama3.1:8b"])), \
+             patch("requests.post", return_value=post_resp) as mock_post:
+            assert llm._call_ollama("hi") == "ollama answer"
+        # llama3.1:8b outranks mistral in the preference order.
+        assert mock_post.call_args.kwargs["json"]["model"] == "llama3.1:8b"
+
+    def test_falls_back_to_first_model(self):
+        post_resp = MagicMock()
+        post_resp.status_code = 200
+        post_resp.json.return_value = {"response": "ans"}
+        with patch("requests.get", return_value=self._tags(["exotic-model:1b"])), \
+             patch("requests.post", return_value=post_resp) as mock_post:
+            llm._call_ollama("hi")
+        assert mock_post.call_args.kwargs["json"]["model"] == "exotic-model:1b"
+
+    def test_generate_non_200_raises(self):
+        post_resp = MagicMock()
+        post_resp.status_code = 500
+        post_resp.text = "boom"
+        with patch("requests.get", return_value=self._tags(["mistral"])), \
+             patch("requests.post", return_value=post_resp), \
+             patch("verticals.retry.time.sleep"):
+            with pytest.raises(RuntimeError, match="Ollama 500"):
+                llm._call_ollama("hi")

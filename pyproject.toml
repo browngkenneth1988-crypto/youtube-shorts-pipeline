@@ -23,7 +23,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "pytest-mock>=3.0"]
+dev = ["pytest>=7.0", "pytest-mock>=3.0", "pytest-cov>=4.0"]
 
 [tool.setuptools.packages.find]
 include = ["verticals*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=verticals --cov-report=term-missing --cov-fail-under=95"
+
+[tool.coverage.run]
+source = ["verticals"]
+
+[tool.coverage.report]
+show_missing = true
+# The `if __name__ == "__main__"` guard can't run under pytest.
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
