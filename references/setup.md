@@ -1,7 +1,7 @@
 # Setup Guide
 
-This guide covers a fresh install of the YouTube Shorts Pipeline on any machine.  
-**First run of `pipeline.py` triggers the setup wizard automatically** — this guide is for reference and for anyone who prefers manual setup.
+This guide covers a fresh install of Verticals v3 on any machine.  
+**First run of `python -m verticals` triggers the setup wizard automatically** — this guide is for reference and for anyone who prefers manual setup.
 
 ---
 
@@ -10,12 +10,21 @@ This guide covers a fresh install of the YouTube Shorts Pipeline on any machine.
 Use your preferred Python 3.10+ environment (system Python or a virtual environment — your choice).
 
 ```bash
+pip install -r requirements.txt
+```
+
+Or install individually:
+
+```bash
 pip install anthropic \
             google-api-python-client \
             google-auth \
             google-auth-oauthlib \
             pillow \
-            requests
+            requests \
+            edge-tts \
+            feedparser \
+            PyYAML
 ```
 
 **Optional (for Whisper captions):**
@@ -50,7 +59,7 @@ Used for script generation.
 3. Copy the key — you'll enter it in the setup wizard
 
 ### ElevenLabs — Optional
-Used for professional voiceover. If omitted, macOS `say` command is used as fallback.
+Used for premium voiceover. If omitted, Edge TTS (free, 300+ voices) is used as the default. macOS `say` is the last-resort fallback.
 - **Note:** Free tier is blocked on server IPs. Pro plan ($22/mo) required for non-local use.
 1. Go to https://elevenlabs.io/settings/api-keys
 2. Create a new key and copy it
@@ -99,7 +108,7 @@ Scopes requested: `youtube.upload`, `youtube.force-ssl` (minimum for upload + ca
 
 ### First run — automatic setup wizard
 ```bash
-python3 python -m verticals draft --news "your topic here"
+python -m verticals draft --news "your topic here"
 ```
 
 On first run (no `~/.verticals/config.json`), the wizard will prompt for all keys and run the YouTube OAuth flow.
@@ -108,16 +117,16 @@ On first run (no `~/.verticals/config.json`), the wizard will prompt for all key
 
 ```bash
 # Draft only (generate script + metadata)
-python3 python -m verticals draft --news "your topic here"
+python -m verticals draft --news "your topic here"
 
 # Produce (generate video from draft)
-python3 python -m verticals produce --draft ~/.verticals/drafts/<id>.json
+python -m verticals produce --draft ~/.verticals/drafts/<id>.json
 
 # Upload
-python3 python -m verticals upload --draft ~/.verticals/drafts/<id>.json
+python -m verticals upload --draft ~/.verticals/drafts/<id>.json
 
 # Full pipeline in one command
-python3 python -m verticals run --news "your topic here"
+python -m verticals run --news "your topic here"
 ```
 
 ---

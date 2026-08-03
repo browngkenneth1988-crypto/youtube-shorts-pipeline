@@ -61,7 +61,7 @@ The `music/` directory must contain `.mp3` files. Add royalty-free tracks (e.g. 
 
 ## Topic Engine
 
-**`python -m pipeline topics` returns no results**
+**`python -m verticals topics` returns no results**
 Check `~/.verticals/config.json` has `topic_sources` configured. Reddit and RSS are enabled by default. Google Trends requires `pytrends`: `pip install pytrends`.
 
 ## Thumbnail
@@ -77,7 +77,7 @@ Use `--force` only when you want to redo everything. Without it, the pipeline re
 ## General
 
 **`ModuleNotFoundError`**
-Missing dependency. Run `pip install anthropic google-api-python-client google-auth google-auth-oauthlib pillow requests openai-whisper feedparser` in your environment.
+Missing dependency. Run `pip install -r requirements.txt` or install individually: `pip install anthropic google-api-python-client google-auth google-auth-oauthlib pillow requests openai-whisper feedparser edge-tts PyYAML`.
 
 **Draft JSON not found**
 Drafts are saved to `~/.verticals/drafts/<timestamp>.json`. Check the timestamp from the draft command output.
