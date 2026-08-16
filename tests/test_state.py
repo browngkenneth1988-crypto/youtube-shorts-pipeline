@@ -1,9 +1,8 @@
 """Tests for pipeline/state.py — PipelineState."""
 
 import json
-from pathlib import Path
 
-from verticals.state import PipelineState, STAGES
+from verticals.state import STAGES, PipelineState
 
 
 class TestPipelineState:

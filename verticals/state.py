@@ -75,4 +75,7 @@ class PipelineState:
 
     def save(self, path: Path):
         """Write the draft (with embedded state) to disk."""
-        path.write_text(json.dumps(self.draft, indent=2, ensure_ascii=False))
+        # encoding must be explicit: Windows defaults to cp1252 and any emoji or
+        # smart quote in a generated script kills the write (seen Aug 5 2026).
+        path.write_text(json.dumps(self.draft, indent=2, ensure_ascii=False),
+                        encoding="utf-8")

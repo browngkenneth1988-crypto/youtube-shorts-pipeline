@@ -14,7 +14,6 @@ from .config import VOICE_ID_EN, VOICE_ID_HI, get_elevenlabs_key, run_cmd
 from .log import log
 from .retry import with_retry
 
-
 # ─────────────────────────────────────────────────────
 # Edge TTS — free, cross-platform, 300+ voices
 # ─────────────────────────────────────────────────────
@@ -51,7 +50,7 @@ def _generate_edge_tts(script: str, out_dir: Path, lang: str, voice_override: st
     try:
         # Handle event loop — works whether called from sync or async context
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
             # Already in an async context, create a new thread
             import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -67,7 +66,7 @@ def _generate_edge_tts(script: str, out_dir: Path, lang: str, voice_override: st
         log(f"Edge TTS voiceover saved: {out_path.name}")
         return out_path
     except Exception as e:
-        raise RuntimeError(f"Edge TTS failed: {e}")
+        raise RuntimeError(f"Edge TTS failed: {e}") from e
 
 
 # ─────────────────────────────────────────────────────

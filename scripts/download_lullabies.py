@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download royalty-free lullaby tracks for OttoMissClub videos.
+"""Download royalty-free lullaby tracks for Life With Otto videos.
 
 Downloads Creative Commons / royalty-free lullaby music from Pixabay's
 free music library. These tracks are safe for YouTube monetization.
@@ -76,7 +76,7 @@ def download_track(track: dict) -> bool:
 
 
 def main():
-    print("Downloading royalty-free lullaby tracks for OttoMissClub...")
+    print("Downloading royalty-free lullaby tracks for Life With Otto...")
     print(f"Music directory: {MUSIC_DIR}\n")
 
     success = 0

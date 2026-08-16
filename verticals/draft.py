@@ -11,7 +11,7 @@ import random
 from .config import PLATFORM_CONFIGS
 from .llm import call_llm
 from .log import log
-from .niche import load_niche, get_script_context, get_visual_context, get_visual_prompt_suffix
+from .niche import get_script_context, get_visual_context, get_visual_prompt_suffix, load_niche
 from .research import research_topic
 
 
@@ -24,21 +24,21 @@ def _fallback_draft(news: str) -> dict:
             "Not to his favorite window. Wherever Otto goes, Kobi goes too. "
             "Because that is what love looks like. Love holds on gently. "
             "You are enough. You are loved. You are magic. Now sleep. "
-            "Sweet dreams, little one. Visit us at brownstoryworld.com."
+            "Sweet dreams, little one."
         ),
         "broll_prompts": [
             "Small curly black Shih-Poo dog sleeping peacefully on soft bed with orange plush dragon toy, warm nightlight glow, dreamy atmosphere",
             "Close-up of adorable black Shih-Poo with brown eyes cuddling orange stuffed dragon, soft pastel lighting, cozy bedroom",
             "Dreamy scene of small black dog and plush dragon under blanket, stars visible through window, gentle warm lighting",
         ],
-        "youtube_title": f"Otto and Kobi — {news[:50]} | OttoMissClub",
+        "youtube_title": f"Otto and Kobi — {news[:50]}",
         "youtube_description": (
             f"{news}\n\n"
-            "Subscribe to OttoMissClub for sweet bedtime moments with Otto and Kobi!\n"
-            "Visit us: www.brownstoryworld.com\n"
-            "#OttoMissClub #BrownStoryWorld #OttoTheShihPoo"
+            "Otto is the real dog behind the Otto's Everyday Adventures children's book series.\n\n"
+            "Subscribe for more of Otto's real life.\n\n"
+            "#shorts #funnydog #dogshorts #shipoo #lifewithotto"
         ),
-        "youtube_tags": "OttoMissClub,BrownStoryWorld,Otto the Shih-Poo,bedtime stories for kids,lullaby for babies",
+        "youtube_tags": "funny dog,dog shorts,shipoo,shih poo,Otto,LifeWithOtto,BrownStoryWorld,Otto the Shih-Poo,dog sleep,calm dog",
         "instagram_caption": "",
         "tiktok_caption": "",
         "thumbnail_prompt": "cute black Shih-Poo dog sleeping with orange plush dragon, dreamy pastel background",
@@ -197,7 +197,6 @@ Output ONLY a valid JSON object, nothing else. Start with {{ and end with }}:
         raw = raw[start:end]
 
     # Fix common JSON issues from LLMs (unescaped newlines in strings)
-    import re
     log(f"Raw LLM response (first 500 chars): {raw[:500]}")
 
     # If response starts with "script" but no opening brace, add one
@@ -244,7 +243,7 @@ Output ONLY a valid JSON object, nothing else. Start with {{ and end with }}:
                     # Last resort: generate a safe default
                     draft = _fallback_draft(news)
             else:
-                log(f"Could not find JSON object in response")
+                log("Could not find JSON object in response")
                 draft = _fallback_draft(news)
 
     # Validate and sanitize LLM output fields

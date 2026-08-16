@@ -33,7 +33,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from verticals.config import DRAFTS_DIR, MEDIA_DIR, LOGS_DIR, CONFIG_FILE
+from verticals.config import DRAFTS_DIR, LOGS_DIR, MEDIA_DIR
 from verticals.log import log, set_verbose
 from verticals.niche import load_niche
 
@@ -122,17 +122,19 @@ def run_daily_pipeline(
     profile = load_niche(niche)
     character = profile.get("character", {})
     channel = profile.get("channel", {})
-    channel_name = channel.get("name", "OttoMissClub")
-    website = channel.get("website", "www.brownstoryworld.com")
+    channel_name = channel.get("name", "Life With Otto")
+    books = channel.get("amazon_books", [])
+    book_links = "; ".join(f"{b['title']} {b['url']}" for b in books)
 
     channel_context = (
-        f"{channel_name} — a children's bedtime and comfort channel. Theme: {theme}. "
+        f"{channel_name} (@LifeWithOttoTV) — audience is PARENTS who love dogs, not children. Theme: {theme}. "
         f"{character.get('name', 'Otto')} is a {character.get('breed', 'small curly black Shih-Poo')}. "
         f"His favorite toy is {character.get('sidekick', 'Kobi, an orange plush dragon')}. "
         f"Every video includes a gentle inspirational quote for children. "
-        f"Tone is soothing, warm, and safe for young kids. "
+        f"Tone is calm and wholesome, written for a parent watching at bedtime or lunch. "
+        f"Never narrate a URL. Never use kids/bedtime-story vocabulary in titles or tags. "
         f"Lullaby-style background music. "
-        f"Website: {website}"
+        f"Book links belong in the description only: {book_links}"
     )
 
     log(f"Drafting script for: {topic}")
@@ -164,13 +166,14 @@ def run_daily_pipeline(
         return draft_path
 
     # Step 3: Produce video
+    import shutil
+
+    from verticals.assemble import assemble_video
     from verticals.broll import generate_broll
-    from verticals.tts import generate_voiceover
     from verticals.captions import generate_captions
     from verticals.music import select_and_prepare_music
-    from verticals.assemble import assemble_video
-    from verticals.niche import get_voice_config, get_caption_config, get_music_config
-    import shutil
+    from verticals.niche import get_caption_config, get_music_config, get_voice_config
+    from verticals.tts import generate_voiceover
 
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     work_dir = MEDIA_DIR / f"work_{job_id}_{lang}"
@@ -258,8 +261,8 @@ def run_daily_pipeline(
     log(f"Video produced: {video_path}")
 
     # Step 4: Upload
-    from verticals.upload import upload_to_youtube
     from verticals.thumbnail import generate_thumbnail
+    from verticals.upload import upload_to_youtube
 
     # Thumbnail
     try:

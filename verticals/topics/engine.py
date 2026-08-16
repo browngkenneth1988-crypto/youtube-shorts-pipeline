@@ -2,7 +2,13 @@
 
 import concurrent.futures
 
-from ..config import load_config, get_anthropic_client, get_claude_backend, call_claude_cli, NICHE_TO_SUBREDDITS
+from ..config import (
+    NICHE_TO_SUBREDDITS,
+    call_claude_cli,
+    get_anthropic_client,
+    get_claude_backend,
+    load_config,
+)
 from ..log import log
 from .base import TopicCandidate
 
@@ -24,10 +30,20 @@ class TopicEngine:
         config = load_config()
         source_config = config.get("topic_sources", {})
 
+        # The niche profile's `discovery:` block supplies per-source defaults.
+        # Without this the profile is inert and every niche silently falls back
+        # to Hacker News + r/technology.
+        niche_discovery = {}
+        try:
+            from ..niche import get_discovery_config, load_niche
+            niche_discovery = get_discovery_config(load_niche(self._niche)) or {}
+        except Exception as e:
+            log(f"Could not read discovery config for niche '{self._niche}': {e}")
+
         # Always register these — they'll check their own enabled status
+        from .google_trends import GoogleTrendsSource
         from .reddit import RedditSource
         from .rss import RSSSource
-        from .google_trends import GoogleTrendsSource
 
         source_map = {
             "reddit": RedditSource,
@@ -56,6 +72,10 @@ class TopicEngine:
 
         for name, cls in source_map.items():
             src_cfg = dict(source_config.get(name, {}))  # shallow copy so we can mutate
+
+            # niche profile fills gaps; anything set in config.json still wins
+            for k, v in (niche_discovery.get(name) or {}).items():
+                src_cfg.setdefault(k, v)
 
             # Apply niche defaults when no explicit config is set by user
             if self._niche != "general":

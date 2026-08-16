@@ -1,42 +1,62 @@
 name: pets
-display_name: "OttoMissClub — Otto the Shih-Poo | Bedtime & Comfort for Kids"
-description: "Children's comfort channel starring Otto the Shih-Poo and his plush dragon Kobi. Lullabies, bedtime stories, and gentle inspiration for little ones."
+display_name: "Life With Otto — @LifeWithOttoTV"
+description: "Calm/bedtime AI-generated content profile pointed at @LifeWithOttoTV. CONFLICT: channel canon (otto-youtube-playbook v3.7, otto-shorts-factory) is real footage, music only, never AI voiceover, audience = parents not kids. This profile does not meet that bar and should not auto-publish public without a decision from Kenneth."
 
 # ─────────────────────────────────────────────────────
 # Channel Branding
 # ─────────────────────────────────────────────────────
 channel:
-  name: "OttoMissClub"
-  website: "www.brownstoryworld.com"
+  name: "Life With Otto"
+  handle: "@LifeWithOttoTV"
+  channel_id: "UCbCHHEKkZXwIABpc4yy29mg"   # verified against the live API Aug 4 2026
+  # Link strategy (otto-youtube-playbook v3.7): every description links DIRECTLY to
+  # Amazon book listings. No website middleman until 1,000+ subs — brownstoryworld.com
+  # is winding down Jan/Feb 2027 and must not appear in descriptions or narration.
+  amazon_books:
+    - title: "Otto Goes on a Potty Patrol"
+      url: "https://www.amazon.com/dp/B0GM6FH5N5"
+    - title: "Otto and the Sparkle Tooth Quest"
+      url: "https://www.amazon.com/dp/B0GMZY5CRZ"
+    - title: "Otto's Brave First Day at Camp"
+      url: "https://www.amazon.com/dp/B0GTB8YYCR"
   youtube_description_footer: |
-    Subscribe to OttoMissClub for sweet bedtime moments with Otto and Kobi!
-    Visit us: www.brownstoryworld.com
-    #OttoMissClub #BrownStoryWorld #OttoTheShihPoo #lullaby #bedtimestory #babysleep #kidsleep #bedtimestoriesforkids #sleepmusic
+    📚 Otto's books (Otto's Everyday Adventures):
+    Otto Goes on a Potty Patrol — https://www.amazon.com/dp/B0GM6FH5N5
+    Otto and the Sparkle Tooth Quest — https://www.amazon.com/dp/B0GMZY5CRZ
+    Otto's Brave First Day at Camp — https://www.amazon.com/dp/B0GTB8YYCR
+
+    Otto is the real dog behind the Otto's Everyday Adventures children's book series.
+
+    Subscribe for more of Otto's real life.
+
+    #shorts #funnydog #dogshorts #shipoo #lifewithotto
+  # Tag pools from otto-youtube-playbook v3.7 (Pool 1 dog + Pool 2 brand + Pool 3 calm).
+  # NEVER use Instagram vocabulary, engagement bait, or kids/bedtime-story tags —
+  # those route to YouTube Kids, which does not support Shorts.
   tags:
-    - "OttoMissClub"
+    - "funny dog"
+    - "dog shorts"
+    - "dogs of youtube"
+    - "cute dog"
+    - "shipoo"
+    - "shih poo"
+    - "shih poo puppy"
+    - "doodle dog"
+    - "small fluffy dog"
+    - "Otto"
+    - "LifeWithOtto"
     - "BrownStoryWorld"
+    - "shihpoo"
+    - "kg brown"
     - "Otto the Shih-Poo"
-    - "Kobi the Dragon"
-    - "bedtime stories for kids"
-    - "lullaby for babies"
-    - "kids sleep music"
-    - "baby lullaby"
-    - "sleep music for children"
-    - "bedtime story"
-    - "calming videos for kids"
-    - "lullaby for toddlers"
-    - "baby sleep music"
-    - "goodnight story"
-    - "soothing bedtime"
-    - "kids relaxation"
-    - "comforting videos for children"
-    - "Shih-Poo"
-    - "cute dog videos"
-    - "children's bedtime"
-    - "sleep tight"
-    - "goodnight stories"
-    - "calming videos for kids"
-    - "puppy lullaby"
+    - "Otto's Everyday Adventures"
+    - "Otto and Kobi"
+    - "dog sleep"
+    - "calm dog"
+    - "dog relaxation"
+    - "relaxing music for dogs"
+    - "dog music"
+    - "sleep music for dogs"
 
 # ─────────────────────────────────────────────────────
 # Character Reference
@@ -122,12 +142,15 @@ script:
       when: "calming counting or mindfulness content"
 
   cta_variants:
-    - "Subscribe to OttoMissClub for sweet dreams every night."
+    - "Subscribe to Life With Otto for sweet dreams every night."
     - "Follow Otto and Kobi for bedtime magic every day."
-    - "Goodnight from OttoMissClub. See you tomorrow night."
-    - "Sweet dreams, little one. Visit us at brownstoryworld.com."
+    - "Goodnight from Life With Otto. See you tomorrow night."
+    - "Sweet dreams, little one. Otto will be here tomorrow."
 
   forbidden_phrases:
+    - "brownstoryworld.com"
+    - "visit us at"
+    - "link in bio"
     - "like and subscribe"
     - "smash that bell"
     - "what's up guys"
@@ -142,7 +165,7 @@ script:
   structure:
     opening: "Soft hook in first 3 seconds. A gentle whisper or calming visual of Otto settling down. No loud sounds."
     middle: "A short bedtime story or gentle scene with Otto and Kobi. Include one inspirational quote for the child. Keep it soothing and rhythmic."
-    closing: "End with a warm goodnight message and soft CTA for OttoMissClub. The last line should always be comforting."
+    closing: "End with a warm goodnight message and soft CTA for Life With Otto. The last line should always be comforting."
 
   # IMPORTANT: Every script MUST include one children's quote
   quote_instruction: "You MUST include exactly one inspirational children's quote in the script. Pick from the CHILDREN'S QUOTES list below. Display it as on-screen text AND narrate it softly. Place it near the end of the script, before the CTA."
@@ -191,6 +214,8 @@ voice:
   energy: "soft, warm, nurturing — like a parent reading a bedtime story"
   style: "think gentle children's audiobook narrator, calming and loving"
 
+  # ENGINE: Edge TTS (free). ElevenLabs subscription ended Aug 1 2026.
+  engine: "edge"
   suggested_voices:
     edge_tts:
       en: "en-US-JennyNeural"
@@ -254,7 +279,7 @@ thumbnail:
     - "Use soft pastel colors — lavender, cream, baby blue, warm gold"
     - "Add stars, moons, or soft sparkles for a bedtime feel"
     - "Text should feel gentle — no bold aggressive fonts"
-    - "Include subtle OttoMissClub watermark in corner"
+    - "No channel watermark — the branded subscribe end-clip carries the handle"
 
 # ─────────────────────────────────────────────────────
 # Topic Discovery
@@ -316,3 +341,20 @@ daily_themes:
       - "Otto's bedtime routine — the coziest goodnight in the world"
       - "Otto and Kobi say goodnight to the sun and hello to the stars"
       - "A Sunday lullaby from Otto to you — sleep tight, little one"
+
+# ─────────────────────────────────────────────────────
+# Publishing Policy — read by verticals/publish.py
+# privacy: private means the daily run builds and uploads as PRIVATE.
+# Change to "public" only if you want unreviewed AI kids content to go live
+# the moment the 6am task finishes.
+# category_id 15 = Pets & Animals. It was hardcoded to 20 (Gaming) before.
+# ─────────────────────────────────────────────────────
+publishing:
+  # made_for_kids MUST stay false: otto-youtube-playbook v3.7 — audience is parents,
+  # not kids; Shorts do not run on YouTube Kids; and made-for-kids disables comments,
+  # which breaks the mandatory pinned-comment step (otto-pin-comment).
+  phase: 2
+  shorts_allowed: true
+  privacy: "private"
+  made_for_kids: false
+  category_id: "15"

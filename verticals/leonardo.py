@@ -5,7 +5,6 @@ across all generated b-roll frames. The reference images of Otto are
 sent as init images so every frame features the same recognizable dog.
 """
 
-import base64
 import time
 from pathlib import Path
 

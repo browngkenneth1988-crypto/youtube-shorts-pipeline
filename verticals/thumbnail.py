@@ -62,7 +62,7 @@ def _overlay_title(image_path: Path, title: str, output_path: Path):
         try:
             font = ImageFont.truetype(font_name, font_size)
             break
-        except (OSError, IOError):
+        except OSError:
             continue
     if font is None:
         font = ImageFont.load_default()

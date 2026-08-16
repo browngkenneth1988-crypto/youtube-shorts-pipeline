@@ -2,7 +2,6 @@
 
 import json
 import os
-import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -76,7 +75,7 @@ def _get_key(name: str) -> str:
         return val
     if CONFIG_FILE.exists():
         try:
-            cfg = json.loads(CONFIG_FILE.read_text())
+            cfg = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
             val = cfg.get(name)
             if val:
                 return val
@@ -135,7 +134,7 @@ def _has_claude_max_credentials() -> bool:
     if not CLAUDE_CREDENTIALS.exists():
         return False
     try:
-        creds = json.loads(CLAUDE_CREDENTIALS.read_text())
+        creds = json.loads(CLAUDE_CREDENTIALS.read_text(encoding="utf-8"))
         return bool(creds.get("claudeAiOauth", {}).get("accessToken"))
     except Exception:
         return False
@@ -214,13 +213,24 @@ def get_gemini_key() -> str:
     return _get_key("GEMINI_API_KEY")
 
 
-def get_youtube_token_path() -> Path:
-    token_path = SKILL_DIR / "youtube_token.json"
-    if token_path.exists():
-        return token_path
+def get_youtube_token_path(niche: str = "") -> Path:
+    """Resolve the OAuth token for a niche's channel.
+
+    Every YouTube channel needs its own token. One file per niche lets Life
+    With Otto and Curious Classroom stay authorized at the same time instead
+    of overwriting each other. Falls back to the legacy single-token file so
+    niches that predate this keep working untouched.
+    """
+    candidates = []
+    if niche:
+        candidates.append(SKILL_DIR / f"youtube_token_{niche}.json")
+    candidates.append(SKILL_DIR / "youtube_token.json")
+    for token_path in candidates:
+        if token_path.exists():
+            return token_path
     raise FileNotFoundError(
-        f"YouTube OAuth token not found at {token_path}.\n"
-        "Run: python3 scripts/setup_youtube_oauth.py"
+        f"YouTube OAuth token not found at {candidates[0]}.\n"
+        f"Run: scripts\\reauth.bat {niche}".rstrip()
     )
 
 
@@ -228,7 +238,7 @@ def load_config() -> dict:
     """Load the full config.json, including topic_sources."""
     if CONFIG_FILE.exists():
         try:
-            return json.loads(CONFIG_FILE.read_text())
+            return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
         except Exception:
             pass
     return {}

@@ -12,9 +12,9 @@ from pathlib import Path
 import requests
 from PIL import Image, ImageDraw, ImageFont
 
-from .config import VIDEO_WIDTH, VIDEO_HEIGHT, get_gemini_key, run_cmd
+from .config import VIDEO_HEIGHT, VIDEO_WIDTH, get_gemini_key, run_cmd
 from .log import log
-from .niche import load_niche, NICHES_DIR
+from .niche import NICHES_DIR, load_niche
 from .retry import with_retry
 
 

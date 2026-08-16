@@ -10,10 +10,28 @@ from .log import log, set_verbose
 from .niche import list_niches
 
 
+def cmd_score(args):
+    """Score a topic against its niche rubric. No script is written."""
+    from .score import format_result, score_topic
+
+    niche = getattr(args, "niche", "general") or "general"
+    result = score_topic(args.topic, niche=niche, provider=getattr(args, "provider", None))
+
+    if result is None:
+        print(f"\n  Niche '{niche}' has no scoring rubric — every topic passes.\n")
+        return None
+
+    print(format_result(result))
+    if result["verdict"] != "APPROVE":
+        sys.exit(1)
+    return result
+
+
 def cmd_draft(args):
+
     from .draft import generate_draft
+    from .score import gate_topic
     from .state import PipelineState
-    import json
 
     DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
     job_id = str(int(time.time()))
@@ -21,6 +39,14 @@ def cmd_draft(args):
     niche = getattr(args, "niche", "general") or "general"
     platform = getattr(args, "platform", "shorts") or "shorts"
     provider = getattr(args, "provider", None)
+
+    # Topic gate — no-op on niches with no scoring block
+    score = gate_topic(
+        args.news,
+        niche=niche,
+        provider=provider,
+        force=getattr(args, "force_topic", False),
+    )
 
     print(f"\n  Drafting: {args.news} [niche: {niche}, platform: {platform}]\n")
     draft = generate_draft(
@@ -31,6 +57,8 @@ def cmd_draft(args):
         provider=provider,
     )
     draft["job_id"] = job_id
+    if score:
+        draft["topic_score"] = score
 
     out_path = DRAFTS_DIR / f"{job_id}.json"
     state = PipelineState(draft)
@@ -41,7 +69,7 @@ def cmd_draft(args):
     print(f"\n  Draft saved: {out_path}")
     print(f"\n  Script:\n{draft['script']}")
     print(f"\n  Title: {draft.get('youtube_title', '')}")
-    print(f"\n  B-roll prompts:")
+    print("\n  B-roll prompts:")
     for i, p in enumerate(draft.get("broll_prompts", [])):
         print(f"  {i+1}. {p}")
 
@@ -49,18 +77,19 @@ def cmd_draft(args):
 
 
 def cmd_produce(args):
-    from .broll import generate_broll
-    from .tts import generate_voiceover
-    from .captions import generate_captions
-    from .music import select_and_prepare_music
-    from .assemble import assemble_video
-    from .niche import load_niche, get_voice_config, get_caption_config, get_music_config
-    from .state import PipelineState
     import json
     import shutil
 
+    from .assemble import assemble_video
+    from .broll import generate_broll
+    from .captions import generate_captions
+    from .music import select_and_prepare_music
+    from .niche import get_caption_config, get_music_config, get_voice_config, load_niche
+    from .state import PipelineState
+    from .tts import generate_voiceover
+
     draft_path = Path(args.draft)
-    draft = json.loads(draft_path.read_text())
+    draft = json.loads(draft_path.read_text(encoding="utf-8"))
     job_id = draft["job_id"]
     lang = args.lang
     state = PipelineState(draft)
@@ -176,13 +205,14 @@ def cmd_produce(args):
 
 
 def cmd_upload(args):
-    from .upload import upload_to_youtube
-    from .thumbnail import generate_thumbnail
-    from .state import PipelineState
     import json
 
+    from .state import PipelineState
+    from .thumbnail import generate_thumbnail
+    from .upload import upload_to_youtube
+
     draft_path = Path(args.draft)
-    draft = json.loads(draft_path.read_text())
+    draft = json.loads(draft_path.read_text(encoding="utf-8"))
     lang = args.lang
     state = PipelineState(draft)
     force = getattr(args, "force", False)
@@ -235,7 +265,7 @@ def cmd_run(args):
         force = False
         voice = getattr(args, "voice", None)
 
-    video_path = cmd_produce(ProduceArgs())
+    cmd_produce(ProduceArgs())
 
     class UploadArgs:
         draft = str(draft_path)
@@ -298,7 +328,7 @@ def main():
 
     # draft
     p_draft = sub.add_parser("draft", help="Generate script + metadata")
-    p_draft.add_argument("--news", required=False, help="Topic/news headline")
+    p_draft.add_argument("--news", "--topic", dest="news", required=False, help="Topic/news headline")
     p_draft.add_argument("--context", default="", help="Channel context")
     p_draft.add_argument("--niche", default="general", help=niche_help)
     p_draft.add_argument("--platform", default="shorts", choices=["shorts", "reels", "tiktok", "all"])
@@ -306,6 +336,13 @@ def main():
     p_draft.add_argument("--discover", action="store_true", help="Use topic engine")
     p_draft.add_argument("--auto-pick", action="store_true", help="Let LLM pick the best topic")
     p_draft.add_argument("--dry-run", action="store_true", help="Draft only")
+    p_draft.add_argument("--force-topic", action="store_true", help="Bypass the niche topic score gate")
+
+    # score
+    p_score = sub.add_parser("score", help="Score a topic against its niche rubric (no script)")
+    p_score.add_argument("--topic", required=True, help="Topic to score")
+    p_score.add_argument("--niche", default="general", help=niche_help)
+    p_score.add_argument("--provider", default=None, help="LLM: claude, gemini, openai, ollama")
 
     # produce
     p_produce = sub.add_parser("produce", help="Generate video from draft")
@@ -323,7 +360,7 @@ def main():
 
     # run (full pipeline)
     p_run = sub.add_parser("run", help="Full pipeline: draft -> produce -> upload")
-    p_run.add_argument("--news", required=False, help="Topic/news headline")
+    p_run.add_argument("--news", "--topic", dest="news", required=False, help="Topic/news headline")
     p_run.add_argument("--niche", default="general", help=niche_help)
     p_run.add_argument("--platform", default="shorts", choices=["shorts", "reels", "tiktok", "all"])
     p_run.add_argument("--provider", default=None, help="LLM: claude, gemini, openai, ollama")
@@ -333,6 +370,7 @@ def main():
     p_run.add_argument("--context", default="")
     p_run.add_argument("--discover", action="store_true")
     p_run.add_argument("--auto-pick", action="store_true")
+    p_run.add_argument("--force-topic", action="store_true", help="Bypass the niche topic score gate")
 
     # topics
     p_topics = sub.add_parser("topics", help="Discover trending topics")
@@ -354,6 +392,11 @@ def main():
     # Handle niches command
     if args.cmd == "niches":
         cmd_niches(args)
+        return
+
+    # Handle score command (no pipeline, no draft written)
+    if args.cmd == "score":
+        cmd_score(args)
         return
 
     # Handle --discover flag for draft/run
@@ -382,16 +425,29 @@ def main():
         print("  Error: --news or --discover required")
         sys.exit(1)
 
-    if args.cmd == "draft":
-        cmd_draft(args)
-    elif args.cmd == "produce":
-        cmd_produce(args)
-    elif args.cmd == "upload":
-        cmd_upload(args)
-    elif args.cmd == "run":
-        cmd_run(args)
-    elif args.cmd == "topics":
-        cmd_topics(args)
+    from .publish import PublishBlocked
+    from .score import TopicRejected
+
+    try:
+        if args.cmd == "draft":
+            cmd_draft(args)
+        elif args.cmd == "produce":
+            cmd_produce(args)
+        elif args.cmd == "upload":
+            cmd_upload(args)
+        elif args.cmd == "run":
+            cmd_run(args)
+        elif args.cmd == "topics":
+            cmd_topics(args)
+    except TopicRejected as e:
+        r = e.result
+        print(f"\n  REJECTED — {r['total']}/{r['max_total']}, threshold {r['threshold']}. Nothing was built.")
+        print("  Override with --force-topic if you disagree.\n")
+        sys.exit(2)
+    except PublishBlocked as e:
+        print(f"\n  UPLOAD BLOCKED by niche publishing policy:\n  {e}\n")
+        print("  The video and thumbnail were still built and are on disk.\n")
+        sys.exit(3)
 
 
 if __name__ == "__main__":

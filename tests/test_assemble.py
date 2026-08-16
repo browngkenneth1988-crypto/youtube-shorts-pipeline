@@ -1,7 +1,7 @@
 """Tests for pipeline/assemble.py — audio duration parsing."""
 
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from verticals.assemble import get_audio_duration
 
@@ -34,4 +34,4 @@ class TestGetAudioDuration:
         get_audio_duration(Path("/tmp/audio.mp3"))
         args = mock_cmd.call_args[0][0]
         assert "ffprobe" in args
-        assert "/tmp/audio.mp3" in args
+        assert str(Path("/tmp/audio.mp3")) in args

@@ -1,0 +1,13 @@
+# Store text as LF in the repo, check out native on Windows. Without this every
+# file shows as modified on a machine that writes CRLF.
+* text=auto eol=lf
+
+# .bat files must keep CRLF or cmd.exe mis-parses multi-line blocks.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Never touch binaries.
+*.mp3 binary
+*.mp4 binary
+*.png binary
+*.jpg binary

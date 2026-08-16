@@ -44,7 +44,8 @@ def assemble_video(
     concat_file = out_dir / "concat.txt"
     def _esc(p):
         return str(p).replace("'", "'\\''" )
-    concat_file.write_text("\n".join(f"file '{_esc(p)}'" for p in animated))
+    concat_file.write_text("\n".join(f"file '{_esc(p)}'" for p in animated),
+                           encoding="utf-8")
 
     merged_video = out_dir / "merged_video.mp4"
     run_cmd([
@@ -59,7 +60,8 @@ def assemble_video(
     # Determine video filter (captions via ASS)
     vf_parts = []
     if ass_path and Path(ass_path).exists():
-        import sys, shutil
+        import shutil
+        import sys
         if sys.platform == "win32":
             # On Windows, copy ASS to work dir and use relative path
             # to avoid drive-letter colon escaping issues with ffmpeg

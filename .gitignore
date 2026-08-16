@@ -27,3 +27,9 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local secrets loaded by the .bat runners
+scripts/secrets.bat
+
+# Local backups taken during the Aug 2026 repair — contain old keys
+_backup_*/

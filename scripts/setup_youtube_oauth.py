@@ -16,9 +16,7 @@ Usage:
   python3 scripts/setup_youtube_oauth.py
 """
 
-import json
 import os
-import stat
 import sys
 from pathlib import Path
 

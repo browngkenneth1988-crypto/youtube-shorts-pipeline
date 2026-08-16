@@ -1,12 +1,11 @@
 """Tests for pipeline/captions.py — word grouping, ASS generation, SRT formatting."""
 
-from pathlib import Path
 
 from verticals.captions import (
-    _group_words,
     _format_ass_time,
     _generate_ass,
     _generate_srt,
+    _group_words,
     _srt_time,
 )
 
@@ -96,8 +95,8 @@ class TestASSGeneration:
         output = tmp_work_dir / "test.ass"
         _generate_ass(sample_words, output)
         content = output.read_text()
-        # Yellow highlight color code
-        assert "\\c&H00FFFF&" in content
+        # ASS inline colour is &HAABBGGRR&, so #FFFF00 becomes &H0000FFFF&.
+        assert "\\c&H0000FFFF&" in content
 
     def test_word_count_events(self, sample_words, tmp_work_dir):
         """Each word in each group gets one dialogue line as active."""
