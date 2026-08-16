@@ -5,9 +5,9 @@ voice pace/energy, caption styling, music mood, thumbnail strategy, and
 topic discovery sources.
 """
 
-import yaml
 from pathlib import Path
-from typing import Any
+
+import yaml
 
 from .log import log
 
@@ -35,7 +35,7 @@ def load_niche(name: str = "general") -> dict:
         return _minimal_profile(name)
 
     try:
-        with open(profile_path, "r", encoding="utf-8") as f:
+        with open(profile_path, encoding="utf-8") as f:
             profile = yaml.safe_load(f) or {}
         profile.setdefault("name", name)
         _cache[name] = profile

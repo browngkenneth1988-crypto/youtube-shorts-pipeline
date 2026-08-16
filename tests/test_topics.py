@@ -1,6 +1,6 @@
 """Tests for pipeline/topics/ — TopicCandidate, sources, engine."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from verticals.topics.base import TopicCandidate, TopicSource
 from verticals.topics.manual import ManualSource

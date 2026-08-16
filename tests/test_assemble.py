@@ -1,7 +1,7 @@
 """Tests for pipeline/assemble.py — audio duration parsing + video assembly."""
 
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -37,7 +37,8 @@ class TestGetAudioDuration:
         get_audio_duration(Path("/tmp/audio.mp3"))
         args = mock_cmd.call_args[0][0]
         assert "ffprobe" in args
-        assert "/tmp/audio.mp3" in args
+        # str(Path(...)) so this passes on Windows, where the separator differs.
+        assert str(Path("/tmp/audio.mp3")) in args
 
 
 @pytest.fixture

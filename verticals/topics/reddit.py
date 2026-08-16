@@ -2,6 +2,7 @@
 
 import requests
 
+from ..log import log
 from .base import TopicCandidate, TopicSource
 
 
@@ -19,7 +20,10 @@ class RedditSource(TopicSource):
         for sub in self.subreddits:
             try:
                 topics.extend(self._fetch_subreddit(sub, per_sub))
-            except Exception:
+            except Exception as e:
+                # Reddit returns 403 to unauthenticated clients as of Aug 2026
+                # regardless of User-Agent. Say so instead of returning a bare 0.
+                log(f"  reddit r/{sub} failed: {type(e).__name__}: {str(e)[:90]}")
                 continue
 
         return topics[:limit]

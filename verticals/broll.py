@@ -1,26 +1,35 @@
-"""Gemini Imagen b-roll generation + Ken Burns animation."""
+"""B-roll generation + Ken Burns animation.
+
+Supports multiple image providers:
+- Gemini Imagen (default, free tier)
+- Leonardo.ai (reference-image-aware, keeps character consistent)
+"""
 
 import base64
+import textwrap
 from pathlib import Path
 
 import requests
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
-from .config import VIDEO_WIDTH, VIDEO_HEIGHT, get_gemini_key, run_cmd
+from .config import VIDEO_HEIGHT, VIDEO_WIDTH, get_gemini_key, run_cmd
 from .log import log
+from .niche import NICHES_DIR, load_niche
 from .retry import with_retry
 
 
 @with_retry(max_retries=3, base_delay=2.0)
 def _generate_image_gemini(prompt: str, output_path: Path, api_key: str):
-    """Generate image via Gemini native image generation (free tier compatible)."""
+    """Generate image via Gemini's image generation capability."""
     url = (
         "https://generativelanguage.googleapis.com/v1beta"
-        "/models/gemini-2.0-flash-exp-image-generation:generateContent"
+        "/models/gemini-2.5-flash-image:generateContent"
     )
     body = {
-        "contents": [{"parts": [{"text": f"Generate an image: {prompt}"}]}],
-        "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "responseModalities": ["TEXT", "IMAGE"],
+        },
     }
     r = requests.post(
         url, json=body, timeout=90,
@@ -31,14 +40,15 @@ def _generate_image_gemini(prompt: str, output_path: Path, api_key: str):
             detail = r.json().get("error", {}).get("message", r.text[:200])
         except Exception:
             detail = r.text[:200]
-        raise RuntimeError(f"Gemini API {r.status_code}: {detail}")
+        raise RuntimeError(f"Gemini Image API {r.status_code}: {detail}")
     data = r.json()
     # Extract image from response parts
-    for part in data.get("candidates", [{}])[0].get("content", {}).get("parts", []):
-        if "inlineData" in part:
-            img_b64 = part["inlineData"]["data"]
-            output_path.write_bytes(base64.b64decode(img_b64))
-            return
+    for candidate in data.get("candidates", []):
+        for part in candidate.get("content", {}).get("parts", []):
+            if "inlineData" in part:
+                img_b64 = part["inlineData"]["data"]
+                output_path.write_bytes(base64.b64decode(img_b64))
+                return
     raise RuntimeError("No image in Gemini response")
 
 
@@ -51,31 +61,161 @@ def _fallback_frame(i: int, out_dir: Path) -> Path:
     return path
 
 
-def generate_broll(prompts: list, out_dir: Path) -> list[Path]:
-    """Generate 3 b-roll frames via Gemini Imagen, with fallback."""
-    api_key = get_gemini_key()
+def _resize_to_portrait(out_path: Path):
+    """Resize/crop image to 9:16 portrait format."""
+    img = Image.open(out_path).convert("RGB")
+    target_w, target_h = VIDEO_WIDTH, VIDEO_HEIGHT
+    orig_w, orig_h = img.size
+    scale = max(target_w / orig_w, target_h / orig_h)
+    new_w, new_h = int(orig_w * scale), int(orig_h * scale)
+    img = img.resize((new_w, new_h), Image.LANCZOS)
+    left = (new_w - target_w) // 2
+    top = (new_h - target_h) // 2
+    img = img.crop((left, top, left + target_w, top + target_h))
+    img.save(out_path)
+
+
+def burn_quote_on_frame(img_path: Path, quote: str, position: str = "center"):
+    """Burn an inspirational quote as visible text onto a b-roll frame.
+
+    Adds a semi-transparent dark overlay behind the text for readability,
+    then renders the quote in a warm, gentle font style.
+    """
+    img = Image.open(img_path).convert("RGBA")
+    w, h = img.size
+
+    # Create overlay for text background
+    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+
+    # Try to load a nice font, fall back to default
+    font_size = w // 18  # Responsive to image width, smaller for better fit
+    try:
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except OSError:
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+        except OSError:
+            font = ImageFont.load_default()
+
+    # Wrap text to fit image width (with generous padding)
+    side_padding = 50
+    usable_width = w - (side_padding * 2)
+    # Estimate chars per line based on font size
+    max_chars = max(12, usable_width // (font_size // 2 + 2))
+    lines = textwrap.wrap(quote, width=max_chars)
+    text_block = "\n".join(lines)
+
+    # Calculate text dimensions
+    bbox = draw.multiline_textbbox((0, 0), text_block, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+
+    # Position the text
+    padding = 50
+    if position == "top":
+        text_y = padding * 3
+    elif position == "lower_third":
+        text_y = h - text_h - padding * 3
+    else:
+        text_y = (h - text_h) // 2
+
+    text_x = (w - text_w) // 2
+
+    # Draw semi-transparent dark rectangle behind text
+    rect_margin = 30
+    draw.rounded_rectangle(
+        [
+            text_x - rect_margin,
+            text_y - rect_margin,
+            text_x + text_w + rect_margin,
+            text_y + text_h + rect_margin,
+        ],
+        radius=20,
+        fill=(0, 0, 0, 140),
+    )
+
+    # Draw the quote text in warm white/gold
+    draw.multiline_text(
+        (text_x, text_y),
+        text_block,
+        font=font,
+        fill=(255, 248, 240, 255),  # Warm white
+        align="center",
+    )
+
+    # Composite overlay onto image
+    result = Image.alpha_composite(img, overlay).convert("RGB")
+    result.save(img_path)
+    log(f"Quote burned onto {img_path.name}")
+
+
+def _get_reference_images(niche_name: str) -> list[Path]:
+    """Get all available reference images for a niche's character."""
+    profile = load_niche(niche_name)
+    character = profile.get("character", {})
+    ref_images = character.get("reference_images", [])
+    project_root = NICHES_DIR.parent
+
+    found = []
+    for ref_path in ref_images:
+        full_path = project_root / ref_path
+        if full_path.exists():
+            found.append(full_path)
+    return found
+
+
+def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list[Path]:
+    """Generate 3 b-roll frames, with provider selection based on niche.
+
+    If the niche has Leonardo.ai config and reference images, uses
+    Leonardo for character-consistent generation. Falls back to Gemini.
+    """
+    profile = load_niche(niche)
+    leo_config = profile.get("visuals", {}).get("leonardo", {})
+    use_leonardo = leo_config.get("provider") == "leonardo"
+    ref_images = _get_reference_images(niche) if use_leonardo else []
+
     frames = []
 
     for i, prompt in enumerate(prompts[:3]):
         out_path = out_dir / f"broll_{i}.png"
+
+        # Pick reference image — alternate between available refs for variety
+        reference_image = ref_images[i % len(ref_images)] if ref_images else None
+
+        # Try Leonardo.ai first if configured (with or without reference images)
+        if use_leonardo:
+            try:
+                from .leonardo import generate_image_leonardo, get_leonardo_key
+                api_key = get_leonardo_key()
+                if api_key:
+                    ref_label = reference_image.name if reference_image else "none"
+                    log(f"Generating b-roll frame {i+1}/3 via Leonardo.ai (ref: {ref_label})...")
+                    generate_image_leonardo(
+                        prompt=prompt,
+                        output_path=out_path,
+                        api_key=api_key,
+                        reference_image_path=reference_image,
+                        model_id=leo_config.get("model_id", "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3"),
+                        contrast=leo_config.get("contrast", 3.5),
+                        init_strength=leo_config.get("init_strength", 0.35),
+                        width=576,
+                        height=1024,
+                    )
+                    _resize_to_portrait(out_path)
+                    frames.append(out_path)
+                    continue
+            except Exception as e:
+                log(f"Leonardo frame {i+1} failed: {e} — falling back to Gemini")
+
+        # Gemini Imagen fallback
         log(f"Generating b-roll frame {i+1}/3 via Gemini Imagen...")
-
         try:
+            api_key = get_gemini_key()
             _generate_image_gemini(prompt, out_path, api_key)
-
-            # Resize/crop to 9:16 portrait
-            img = Image.open(out_path).convert("RGB")
-            target_w, target_h = VIDEO_WIDTH, VIDEO_HEIGHT
-            orig_w, orig_h = img.size
-            scale = max(target_w / orig_w, target_h / orig_h)
-            new_w, new_h = int(orig_w * scale), int(orig_h * scale)
-            img = img.resize((new_w, new_h), Image.LANCZOS)
-            left = (new_w - target_w) // 2
-            top = (new_h - target_h) // 2
-            img = img.crop((left, top, left + target_w, top + target_h))
-            img.save(out_path)
+            _resize_to_portrait(out_path)
             frames.append(out_path)
-
         except Exception as e:
             log(f"Frame {i+1} failed: {e} — using fallback")
             frames.append(_fallback_frame(i, out_dir))

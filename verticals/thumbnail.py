@@ -19,7 +19,7 @@ def _generate_thumb_image(prompt: str, output_path: Path, api_key: str):
     """Generate a 16:9 thumbnail via Gemini native image generation."""
     url = (
         "https://generativelanguage.googleapis.com/v1beta"
-        "/models/gemini-2.0-flash-exp-image-generation:generateContent"
+        "/models/gemini-2.5-flash-image:generateContent"
     )
     body = {
         "contents": [{"parts": [{"text": f"Generate a 16:9 landscape image: {prompt}"}]}],
@@ -62,7 +62,7 @@ def _overlay_title(image_path: Path, title: str, output_path: Path):
         try:
             font = ImageFont.truetype(font_name, font_size)
             break
-        except (OSError, IOError):
+        except OSError:
             continue
     if font is None:
         font = ImageFont.load_default()

@@ -14,7 +14,6 @@ from .config import VOICE_ID_EN, VOICE_ID_HI, get_elevenlabs_key, run_cmd
 from .log import log
 from .retry import with_retry
 
-
 # ─────────────────────────────────────────────────────
 # Edge TTS — free, cross-platform, 300+ voices
 # ─────────────────────────────────────────────────────
@@ -51,7 +50,7 @@ def _generate_edge_tts(script: str, out_dir: Path, lang: str, voice_override: st
     try:
         # Handle event loop — works whether called from sync or async context
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
             # Already in an async context, create a new thread
             import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -67,7 +66,7 @@ def _generate_edge_tts(script: str, out_dir: Path, lang: str, voice_override: st
         log(f"Edge TTS voiceover saved: {out_path.name}")
         return out_path
     except Exception as e:
-        raise RuntimeError(f"Edge TTS failed: {e}")
+        raise RuntimeError(f"Edge TTS failed: {e}") from e
 
 
 # ─────────────────────────────────────────────────────
@@ -130,6 +129,36 @@ def _generate_say(script: str, out_dir: Path) -> Path:
         "ffmpeg", "-i", str(out_path), "-acodec", "libmp3lame",
         str(mp3_path), "-y", "-loglevel", "quiet",
     ])
+    return mp3_path
+
+
+def _generate_pyttsx3(script: str, out_dir: Path) -> Path:
+    """Windows fallback TTS using pyttsx3 (built-in Windows voices)."""
+    import pyttsx3
+
+    wav_path = out_dir / "voiceover_pyttsx3.wav"
+    mp3_path = out_dir / "voiceover_en.mp3"
+
+    engine = pyttsx3.init()
+    engine.setProperty('rate', 130)  # Slower for bedtime content
+    engine.setProperty('volume', 1.0)
+
+    # Try to find a female voice for warmth
+    voices = engine.getProperty('voices')
+    for voice in voices:
+        if 'female' in voice.name.lower() or 'zira' in voice.name.lower():
+            engine.setProperty('voice', voice.id)
+            break
+
+    engine.save_to_file(script, str(wav_path))
+    engine.runAndWait()
+
+    # Convert WAV to MP3
+    run_cmd([
+        "ffmpeg", "-i", str(wav_path), "-acodec", "libmp3lame",
+        "-q:a", "2", str(mp3_path), "-y", "-loglevel", "quiet",
+    ])
+    log(f"pyttsx3 voiceover saved: {mp3_path.name}")
     return mp3_path
 
 
@@ -211,8 +240,13 @@ def generate_voiceover(
                 log("Falling back to ElevenLabs...")
                 provider = "elevenlabs"
             else:
-                log("Falling back to macOS say...")
-                return _generate_say(script, out_dir)
+                import sys
+                if sys.platform == "win32":
+                    log("Falling back to pyttsx3 (Windows TTS)...")
+                    return _generate_pyttsx3(script, out_dir)
+                else:
+                    log("Falling back to macOS say...")
+                    return _generate_say(script, out_dir)
 
     if provider == "elevenlabs":
         try:
@@ -223,10 +257,18 @@ def generate_voiceover(
             )
         except Exception as e:
             log(f"ElevenLabs failed: {e}")
-            log("Falling back to macOS say...")
-            return _generate_say(script, out_dir)
+            import sys
+            if sys.platform == "win32":
+                log("Falling back to pyttsx3 (Windows TTS)...")
+                return _generate_pyttsx3(script, out_dir)
+            else:
+                log("Falling back to macOS say...")
+                return _generate_say(script, out_dir)
 
     if provider == "say":
+        import sys
+        if sys.platform == "win32":
+            return _generate_pyttsx3(script, out_dir)
         return _generate_say(script, out_dir)
 
     raise ValueError(f"Unknown TTS provider: {provider}")

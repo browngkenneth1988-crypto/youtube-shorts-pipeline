@@ -81,3 +81,34 @@ Missing dependency. Run `pip install anthropic google-api-python-client google-a
 
 **Draft JSON not found**
 Drafts are saved to `~/.verticals/drafts/<timestamp>.json`. Check the timestamp from the draft command output.
+
+## YouTube uploads fail with `invalid_grant` (diagnosed Aug 4 2026)
+
+**Symptom:** every upload dies with
+`('invalid_grant: Token has been expired or revoked.', ...)`
+while the rest of the pipeline builds fine. Videos and thumbnails land in
+`~/.verticals/media/` and nothing reaches YouTube.
+
+**Do NOT just re-authorise.** That buys 7 days and then fails identically.
+
+**Root cause:** the Google Cloud OAuth consent screen was in publishing status
+**Testing**. Google expires refresh tokens for testing apps after 7 days.
+Evidence: token issued Apr 4 2026, last successful upload Apr 7, first
+`invalid_grant` Apr 11 — exactly 7 days. It then failed daily for 119 days.
+
+**Fix (done Aug 4 2026):**
+1. console.cloud.google.com → Google Auth Platform → Audience
+   (project `gen-lang-client-0081430868`) → Publishing status → **Publish app**.
+   Testing → In production. Refresh tokens stop expiring.
+2. Run `scripts\reauth.bat`. Sign in with the account owning @LifeWithOttoTV.
+3. At "Google hasn't verified this app" → Advanced → Go to ... (unsafe).
+   Expected for an unverified personal app; no Google review needed at 1 user.
+4. Grant BOTH scopes. `youtube.upload` alone posts videos but silently breaks
+   captions and thumbnails, which need `youtube.force-ssl`.
+
+`reauth.bat` prints the authorised channel title, handle, and ID after sign-in —
+check it. Verified Aug 4 2026: Life With Otto TV / @lifewithottotv /
+UCbCHHEKkZXwIABpc4yy29mg / 345 subs.
+
+**Verify a token without re-running the flow:** check `~/.verticals/youtube_token.json`
+for a non-empty `refresh_token` and both scopes in `scopes`.

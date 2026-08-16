@@ -1,7 +1,8 @@
 """DuckDuckGo research — anti-hallucination gate."""
 
-import requests
 from html.parser import HTMLParser
+
+import requests
 
 from .config import extract_keywords
 from .log import log

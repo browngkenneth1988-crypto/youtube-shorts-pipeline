@@ -1,5 +1,6 @@
 """RSS/Atom feed topic source."""
 
+from ..log import log
 from .base import TopicCandidate, TopicSource
 
 
@@ -27,6 +28,10 @@ class RSSSource(TopicSource):
         for feed_url in self.feeds:
             try:
                 feed = feedparser.parse(feed_url)
+                if getattr(feed, "bozo", False) and not feed.entries:
+                    log(f"  rss feed unparseable ({feed_url[:60]}): {feed.bozo_exception!r}")
+                if not feed.entries:
+                    log(f"  rss feed empty ({feed_url[:60]}) status={getattr(feed, 'status', '?')}")
                 for entry in feed.entries[:per_feed]:
                     topics.append(TopicCandidate(
                         title=entry.get("title", ""),
@@ -35,7 +40,10 @@ class RSSSource(TopicSource):
                         summary=entry.get("summary", "")[:200],
                         url=entry.get("link", ""),
                     ))
-            except Exception:
+            except Exception as e:
+                log(f"  rss feed failed ({feed_url[:60]}): {type(e).__name__}: {e}")
                 continue
 
+        if not topics:
+            log(f"  rss: {len(self.feeds)} feed(s) returned nothing — {self.feeds}")
         return topics[:limit]

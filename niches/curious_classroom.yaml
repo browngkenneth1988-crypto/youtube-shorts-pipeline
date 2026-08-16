@@ -1,0 +1,310 @@
+name: curious_classroom
+display_name: "Curious Classroom — Big ideas explained simply"
+description: "Faceless educational entertainment. Mini-documentaries and explainers across 7 pillars: strange science, brain and psychology, weird history, animals and nature, space and earth, inventions and discoveries, everyday mysteries."
+
+# ─────────────────────────────────────────────────────
+# Channel Branding
+# Canon source: curious-classroom-playbook v1.3 (Aug 1 2026)
+# ─────────────────────────────────────────────────────
+channel:
+  name: "Curious Classroom"
+  tagline: "Big ideas explained simply"
+  handle: "@CuriousClassroomTV"          # @CuriousClassroom was taken (Aug 4 2026)
+  channel_id: "UC5e4hQ3xUvbT4Mci34nNsSA" # created Aug 4 2026, verified in the switcher
+  promise: "Every video teaches the viewer something interesting, strange, or useful — simply."
+  audience: "Curious teens, adults, and families. People who like knowing why things happen."
+  # No channel-name tags. No branding in the first 60 chars of a title.
+  # No website/affiliate links in descriptions under 1K subs. (Playbook anti-patterns.)
+  youtube_description_footer: ""
+  tags: []
+
+# ─────────────────────────────────────────────────────
+# Publishing Policy — read by verticals/publish.py
+# Phase 1 = videos 1-8, one long-form per week, NO Shorts.
+# Flip phase to 2 only after video 8 is live.
+# ─────────────────────────────────────────────────────
+publishing:
+  phase: 2
+  shorts_allowed: true
+  shorts_blocked_reason: >-
+    Curious Classroom Phase 1 (videos 1-8) is one long-form per week and no derivative
+    Shorts. Shorts split attention on a channel with no baseline. Set publishing.phase to 2
+    in niches/curious_classroom.yaml once video 8 is live, then shorts_allowed becomes true.
+  privacy: "private"
+  made_for_kids: false
+  category_id: "27"          # Education
+  publish_day: "sunday"
+  publish_window_et: "09:00-11:00"
+  same_day_as_longform: false
+
+# ─────────────────────────────────────────────────────
+# Topic Scoring Gate — 50-point system, 40+ to approve
+# Enforced by verticals/score.py before any script is written.
+# ─────────────────────────────────────────────────────
+scoring:
+  enabled: true
+  threshold: 40
+  max_total: 50
+  categories:
+    - id: curiosity
+      max: 10
+      question: "Does this topic naturally make someone think 'wait, really?' — is the curiosity gap real and immediate?"
+    - id: evergreen
+      max: 10
+      question: "Will this still be worth watching in 5 years, or does it decay with the news cycle?"
+    - id: visual
+      max: 10
+      question: "Can this be shown, not just told? Are there concrete images, not abstractions?"
+    - id: simplicity
+      max: 10
+      question: "Can it be explained clearly in 8-12 minutes without hand-waving or jargon?"
+    - id: subscriber_fit
+      max: 10
+      question: "Would a Curious Classroom subscriber expect this and want more of it?"
+  bonuses:
+    - "Answers a question people naturally wonder about"
+    - "Contains a mystery or a surprising twist"
+    - "Connects to brain, body, animals, nature, space, or everyday life"
+    - "Fits two or more pillars (cross-pillar topics score higher)"
+  pillars:
+    - "Strange Science"
+    - "Human Brain & Psychology"
+    - "Weird History"
+    - "Animals & Nature"
+    - "Space & Earth"
+    - "Inventions & Discoveries"
+    - "Everyday Mysteries Explained"
+  calibration_approve:
+    - "Why Time Feels Faster As You Age"
+    - "Why Your Brain Lies To You"
+    - "Why We Forget Dreams So Quickly"
+    - "Why Space Is Completely Silent"
+    - "The Strange Science Behind Deja Vu"
+    - "Why Some Animals Can Sense Storms"
+    - "Why Ancient People Feared Eclipses"
+    - "The Invention That Let Humans See Invisible Worlds"
+  calibration_reject:
+    - weak: "The History of the Microscope"
+      reframe: "The Invention That Let Humans See Invisible Worlds"
+    - weak: "Facts About Sleep"
+      reframe: "Why Your Brain Paralyzes You Every Night"
+    - weak: "How Eclipses Work"
+      reframe: "Why Ancient People Thought Eclipses Were the End of the World"
+  hard_rejects:
+    - "political arguments or partisan framing"
+    - "graphic true crime"
+    - "medical advice"
+    - "financial advice"
+    - "any claim that cannot be verified"
+    - "clickbait the video cannot satisfy"
+
+# ─────────────────────────────────────────────────────
+# Script Intelligence
+# Written for a synthetic narrator — voice locked Aug 1 2026.
+# Cheapness comes from script and pacing, not the engine.
+# ─────────────────────────────────────────────────────
+script:
+  tone: "warm, smart, plain-spoken. Curious rather than authoritative. Never textbook, never lecturing."
+  pacing: "steady with deliberate beats. A period is a beat, a paragraph break is a breath. Flat pacing is the loudest synthetic-voice tell."
+  perspective: "second person to the viewer. 'You' does the work. Never 'we will explore' or 'today we talk about'."
+  word_count: "150 to 170"
+  sentence_style: "short declaratives, one idea per sentence, no subordinate clauses. A synthetic voice cannot carry a comma-heavy sentence and the seams show."
+
+  hooks:
+    - id: why_gap
+      template: "{everyday_thing} happens to you constantly. Almost nobody knows why."
+      when: "default — topic is a common experience with a hidden mechanism"
+    - id: wait_really
+      template: "{surprising_claim}. That is not a metaphor. That is literally what happens."
+      when: "topic has one counterintuitive fact that carries the whole video"
+    - id: your_brain
+      template: "Your brain is doing something right now that you did not agree to."
+      when: "Human Brain & Psychology pillar"
+    - id: they_believed
+      template: "For {timespan}, people were certain {old_belief}. They had good reasons."
+      when: "Weird History or Inventions pillar"
+    - id: the_thing_missing
+      template: "There is a reason {thing} does not exist. It is stranger than you would guess."
+      when: "Everyday Mysteries pillar, absence-based framing"
+    - id: animal_sense
+      template: "{animal} knows something is coming before you do. Here is how."
+      when: "Animals & Nature pillar"
+    - id: silent_scale
+      template: "{cosmic_fact}. And nothing about that is intuitive."
+      when: "Space & Earth pillar"
+
+  cta_variants:
+    - "There is more where that came from."
+    - "Subscribe if you like knowing why."
+    - "One more strange thing, on the channel."
+
+  forbidden_phrases:
+    - "like and subscribe"
+    - "smash that bell"
+    - "hey guys"
+    - "what's up guys"
+    - "in this video"
+    - "today we will talk about"
+    - "let's dive in"
+    - "without further ado"
+    - "let me know in the comments"
+    - "buckle up"
+    - "mind-blowing"
+    - "you won't believe"
+    - "it's important to note"
+    - "in conclusion"
+    - "delve"
+
+  structure:
+    opening: "Hook in the first 5 seconds. No greeting, no channel name, no premise-setting. Open on the curiosity gap itself."
+    middle: "Curiosity setup, then the simple explanation, then two surprising concrete examples, then the deeper insight. Each beat earns the next. Use a vivid comparison instead of a number wherever a number would be forgettable."
+    closing: "One clean takeaway the viewer can repeat to someone else tomorrow. Then a soft subscribe reason. Never end on an unanswered question."
+
+  accuracy_rule: >-
+    Accuracy is non-negotiable on this channel. Every specific number, date, and named claim
+    in the script must be verifiable. If a fact cannot be verified, replace it with one that
+    can or cut it. One correction in the comments costs more than one less viral hook.
+
+  visual_direction: >-
+    Include bracketed visual direction inline where it changes the shot, e.g. [VISUAL: timelapse
+    of a clock face]. Direction is for the editor and does not get narrated.
+
+# ─────────────────────────────────────────────────────
+# Visual Intelligence
+# ─────────────────────────────────────────────────────
+visuals:
+  style: "documentary still photography and clean scientific illustration. Natural light, real textures, no UI overlays."
+  mood: "curious, slightly wondrous, never ominous, never cartoonish"
+  color_palette: ["#0F1A24", "#1D3A53", "#E8C86A", "#DCE6EC", "#B84A2E"]
+
+  subjects:
+    prefer:
+      - "macro photograph of a real object filling the frame, shallow depth of field"
+      - "clean cross-section or cutaway diagram on a neutral background"
+      - "archival-looking photograph or engraving of a historical scene"
+      - "wildlife photograph in natural habitat, telephoto compression"
+      - "astrophotography or a scale comparison against a familiar object"
+      - "single human hand interacting with the subject, no face"
+      - "timelapse-style frame of a slow process caught mid-change"
+    avoid:
+      - "faces of identifiable people"
+      - "text or lettering rendered inside the image"
+      - "stock-photo people pointing at charts"
+      - "cartoon or clipart style"
+      - "neon, cyberpunk, or sci-fi HUD aesthetics"
+      - "anything resembling a real named person or brand logo"
+
+  prompt_suffix: "photorealistic documentary photography, natural lighting, fine detail, muted natural color, no text, no lettering, no watermark"
+
+# ─────────────────────────────────────────────────────
+# Voice Intelligence — LOCKED Aug 1 2026, do not relitigate
+# One voice, forever. Changing narrator makes a channel sound like a content farm.
+# Record the chosen ElevenLabs voice_id here once and never change it.
+# Pick the conversational preset, never the dramatic documentary-narrator preset.
+# ─────────────────────────────────────────────────────
+voice:
+  # CANON CONFLICT (Aug 4 2026): curious-classroom-playbook v1.3 locked synthetic
+  # narration on Aug 1 2026 with "Use ElevenLabs, already in the stack. No new
+  # subscription." The ElevenLabs subscription ended that same day. The DECISION
+  # (synthetic narration) still holds; the ENGINE named in it no longer exists.
+  # Engine set to Edge TTS (free) so the channel stays runnable. The playbook
+  # needs a v1.4 patch naming the engine — Kenneth's call, not a silent rewrite.
+  locked: true          # the DECISION (synthetic narration) is locked
+  locked_date: "2026-08-01"
+  engine: "edge"        # the ENGINE is not what the playbook says — see above
+  engine_changed: "2026-08-04"
+  pace: "measured, approximately 145 words per minute"
+  energy: "warm and level. Interested, not excited. Never announcer."
+  style: "a smart friend explaining something over coffee — not a documentary narrator"
+
+  suggested_voices:
+    edge_tts:
+      en: "en-US-BrianMultilingualNeural"   # ACTIVE. Edge counterpart of the locked
+                                            # ElevenLabs "Brian" (playbook v1.5). One
+                                            # voice, locked forever — never change this.
+    elevenlabs:
+      voice_id: "nPczCjzI2devNBz1zQrb"   # "Brian" — the LOCKED brand voice per playbook
+                                          # v1.5. INACTIVE: no ElevenLabs subscription
+                                          # since Aug 1 2026. Restore this engine first
+                                          # if the subscription ever comes back.
+      settings:
+        stability: 0.55
+        similarity_boost: 0.80
+        style: 0.10
+
+  pronunciation_overrides: {}   # add respellings here as they come up; never let it mispronounce twice
+
+  disclosure_note: >-
+    A stock synthetic voice reading original narration does not require YouTube's
+    altered-content disclosure. A cloned voice of a real person does. Never clone anyone,
+    including Kenneth, for this channel.
+
+# ─────────────────────────────────────────────────────
+# Caption Intelligence
+# ─────────────────────────────────────────────────────
+captions:
+  highlight_color: "#E8C86A"
+  text_color: "#FFFFFF"
+  font_family: "Arial"
+  font_size: 68
+  font_weight: "bold"
+  position: "lower_third"
+  background: "semi_transparent_dark"
+  words_per_group: 3
+
+# ─────────────────────────────────────────────────────
+# Music Intelligence
+# ─────────────────────────────────────────────────────
+music:
+  mood: "sparse ambient underscore, no melody competing with speech, no percussion hits"
+  energy: "low"
+  tags: ["ambient", "documentary", "underscore", "sparse", "warm"]
+  duck_volume_speech: 0.08
+  duck_volume_gap: 0.18
+
+# ─────────────────────────────────────────────────────
+# Thumbnail Intelligence
+# ─────────────────────────────────────────────────────
+thumbnail:
+  style: "one dominant real object or creature on a clean background, warm accent, high contrast"
+  text_color: "#FFFFFF"
+  accent_color: "#E8C86A"
+  text_position: "left_aligned"
+  max_words: 4
+  font_style: "bold condensed sans serif"
+  guidelines:
+    - "Four words maximum. The title carries the rest."
+    - "Readable at 120px wide on a phone browse feed."
+    - "One subject. Never a face and an object competing."
+    - "The thumbnail must state the curiosity gap, not the answer."
+    - "No channel name, no logo, no branding."
+
+# ─────────────────────────────────────────────────────
+# Topic Discovery
+# ─────────────────────────────────────────────────────
+discovery:
+  # Reddit's public .json endpoint returns 403 to unauthenticated clients as of
+  # Aug 2026, regardless of User-Agent — verified Aug 5 2026. Disabled so it
+  # stops burning 15s of timeout on every run. Re-enable only with real OAuth.
+  reddit:
+    enabled: false
+    subreddits:
+      - "todayilearned"
+      - "askscience"
+      - "AskHistorians"
+      - "explainlikeimfive"
+      - "space"
+      - "psychology"
+  # Verified returning entries Aug 5 2026 (60 / 30 / 271 / 20 respectively).
+  rss:
+    enabled: true
+    feeds:
+      - "https://www.sciencedaily.com/rss/top/science.xml"
+      - "https://phys.org/rss-feed/"
+      - "https://www.smithsonianmag.com/rss/smart-news/"
+      - "https://www.livescience.com/feeds/all"
+      - "https://feeds.arstechnica.com/arstechnica/science"
+  google_trends:
+    enabled: false      # noisy and news-cycle driven; the rubric rejects most of it anyway
+    category: "174"
+    geo: "US"

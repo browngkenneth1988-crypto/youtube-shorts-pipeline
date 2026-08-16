@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    # Weekly full-history secret sweep — catches anything committed with
+    # --no-verify, which the pre-commit hook cannot.
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install test dependencies
+        # Deliberately not `pip install -r requirements.txt`: openai-whisper
+        # drags in torch (~2GB) and is imported lazily, so the suite never
+        # touches it. Keep this list in step with module-level imports.
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-mock ruff requests Pillow PyYAML
+
+      - name: Lint
+        run: ruff check .
+
+      # Deliberately no repo-wide `ruff format --check`. 37 files predate the
+      # formatter and rewriting them all would bury real history under a
+      # whitespace commit. The pre-commit hook formats only files you touch, so
+      # the tree converges as it's edited. Turn this into a gate once it's clean.
+
+      - name: Test
+        run: pytest tests/ -q
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # --log-opts=--all below is useless without this
+
+      # Was gitleaks/gitleaks-action@v2. Dropped because its scan scope depends
+      # on the triggering event: on `push` it scans only the commits in that
+      # push. Three live API keys sat in this branch's history from Apr 4 to
+      # Aug 16 2026 and every push-triggered run went green, because the
+      # workflow postdated the offending commits and so they were never in any
+      # pushed range. A gate whose coverage depends on how it was triggered
+      # reads as green when it has checked nothing.
+      #
+      # The pinned CLI scans the same thing on every event. Version tracks
+      # .pre-commit-config.yaml — bump both together.
+      - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: "8.30.0"
+        run: |
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      # --log-opts=--all reaches every branch, not just the checked-out one.
+      # --redact keeps secret values out of the log: this repo is public, so a
+      # failing run must not publish the thing it is complaining about.
+      # --config is explicit rather than relying on root auto-discovery.
+      # Exits 1 on any finding, which fails the job.
+      - name: Scan full history for committed secrets
+        run: |
+          gitleaks git . \
+            --config .gitleaks.toml \
+            --log-opts="--all" \
+            --redact \
+            --verbose

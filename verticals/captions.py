@@ -103,9 +103,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         if not group:
             continue
 
-        group_start = group[0]["start"]
-        group_end = group[-1]["end"]
-
         # For each word in the group being active, emit one dialogue line
         for active_idx, active_word in enumerate(group):
             start = active_word["start"]

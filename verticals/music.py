@@ -5,15 +5,29 @@ from pathlib import Path
 
 from .log import log
 
-# Music directory ships with the package
-MUSIC_DIR = Path(__file__).resolve().parent.parent / "music"
+
+def _music_root() -> Path:
+    """MUSIC_DIR from env or ~/.verticals/config.json; else the packaged music/."""
+    from .config import _get_key
+    val = _get_key("MUSIC_DIR")
+    return Path(val).expanduser() if val else Path(__file__).resolve().parent.parent / "music"
 
 
-def _find_tracks() -> list[Path]:
-    """Find all MP3 tracks in the music/ directory."""
+MUSIC_DIR = _music_root()
+
+
+def _find_tracks(niche: str = None) -> list[Path]:
+    """Find MP3 tracks: MUSIC_DIR/<niche>/ first, then flat, then recursive."""
     if not MUSIC_DIR.exists():
         return []
-    return sorted(MUSIC_DIR.glob("*.mp3"))
+    if niche:
+        sub = MUSIC_DIR / niche
+        if sub.is_dir():
+            tracks = sorted(sub.glob("*.mp3"))
+            if tracks:
+                return tracks
+    tracks = sorted(MUSIC_DIR.glob("*.mp3"))
+    return tracks if tracks else sorted(MUSIC_DIR.rglob("*.mp3"))
 
 
 def _get_speech_regions(audio_path: Path) -> list[tuple[float, float]]:
@@ -77,18 +91,19 @@ def select_and_prepare_music(
     work_dir: Path,
     duck_speech: float = 0.12,
     duck_gap: float = 0.25,
+    niche: str = None,
 ) -> dict:
     """Select a random track, build duck filter from speech regions.
 
     Returns dict with track_path and duck_filter for use by assemble.py.
     """
-    tracks = _find_tracks()
+    tracks = _find_tracks(niche)
     if not tracks:
-        log("No music tracks found in music/ — skipping background music")
+        log(f"No music tracks found under {MUSIC_DIR} — skipping background music")
         return {}
 
     track = random.choice(tracks)
-    log(f"Selected music track: {track.name}")
+    log(f"Selected music track: {track.name} ({len(tracks)} available)")
 
     # Get speech regions for ducking
     speech_regions = _get_speech_regions(voiceover_path)
