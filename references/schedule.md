@@ -44,9 +44,23 @@ nothing scored.
 something to retry: the provider is dropped for the rest of the run after one
 refusal, and `call_llm` fails over to the next configured provider.
 
-**There is currently only one provider configured**, so failover has nowhere to
-go. Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` in `scripts\secrets.bat`, or
-install Ollama for a $0 local fallback, and the chain becomes real.
+### The fallback chain, as configured
+
+`gemini` → `claude`. Verified live on 2026-08-16 by forcing Gemini's 429 and
+watching a real Claude call answer.
+
+Gemini stays first because it is free. Claude runs on a metered
+`ANTHROPIC_API_KEY` in `scripts\secrets.bat` (key `verticals-fallback`, no
+expiry — an expiring key would take the 6am job down on a morning nobody was
+watching for it).
+
+Cost, measured against the real prompts: a scoring call is ~796 input tokens
+and a draft ~1777, so a full day at `--limit 12` is ~11.3k input and ~6k
+output. On `claude-sonnet-5` that is roughly **$2.50/month worst case** — worst
+case meaning Gemini is dry every single day. Days Gemini covers cost nothing.
+
+If that ever needs to go to zero, install Ollama and it slots in ahead of
+Claude as a $0 local option.
 
 Why this and not video production: Curious Classroom Phase 1 canon is one
 long-form per week and no Shorts until video 8 is live. A daily Shorts builder
