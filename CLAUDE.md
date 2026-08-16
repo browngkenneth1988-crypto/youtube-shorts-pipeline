@@ -131,9 +131,11 @@ interactive `run_setup()` wizard and exits.
 
 - **LLM** (`llm.py`): resolution order is explicit `--provider` → `LLM_PROVIDER`
   env → `config.json` → auto-detect by available key. Claude uses model
-  `claude-opus-5` via the Anthropic SDK, or the local `claude` CLI (Claude Max,
-  no API key) when only that is available. Ollama picks the best locally-pulled
-  model.
+  `claude-sonnet-5` via the Anthropic SDK, or the local `claude` CLI (Claude Max,
+  no API key) when only that is available. Sonnet rather than Opus because this
+  path is a **paid fallback for a free-tier job** — rubric scoring and short
+  script drafting are routine work, and Opus 5 costs ~2.5x more for no gain
+  here. Ollama picks the best locally-pulled model.
   `call_llm()` builds a **fallback chain** (`build_fallback_chain`): the
   preferred provider, then every other configured one in `FALLBACK_ORDER`, so a
   vendor running dry doesn't end the run. Retries happen inside

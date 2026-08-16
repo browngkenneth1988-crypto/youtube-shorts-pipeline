@@ -276,12 +276,20 @@ def _call_claude(prompt: str, max_tokens: int) -> str:
         return call_claude_cli(prompt, max_tokens=max_tokens)
 
     client = get_anthropic_client()
-    # Thinking is on by default on Opus 5 and max_tokens caps thinking plus the
-    # answer together, so the budget is floored — a 1500-token cap tuned for a
+    # Sonnet 5, not Opus 5. This path is a paid fallback for a free-tier job:
+    # scoring a topic against a fixed rubric and drafting a 150-word script is
+    # routine work, not hard reasoning. At ~11k input and ~6k output tokens a
+    # day the difference is roughly $6/mo on Opus versus $2.50/mo on Sonnet, and
+    # thinking tokens bill as output at the higher rate, which widens the gap.
+    # Haiku 4.5 would halve it again, but the draft becomes a published script,
+    # so quality is worth the tier.
+    #
+    # Thinking is on by default and max_tokens caps thinking plus the answer
+    # together, so the budget is floored — a 1500-token cap tuned for a
     # non-thinking model truncates the response mid-sentence. Effort is low
-    # because scoring and drafting are routine work, not hard reasoning.
+    # for the same reason the cheaper model is the right one.
     msg = client.messages.create(
-        model="claude-opus-5",
+        model="claude-sonnet-5",
         max_tokens=max(max_tokens, 4096),
         output_config={"effort": "low"},
         messages=[{"role": "user", "content": prompt}],
