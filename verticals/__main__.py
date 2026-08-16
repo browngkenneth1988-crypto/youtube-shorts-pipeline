@@ -233,7 +233,7 @@ def cmd_upload(args):
     thumb_path = None
     if force or not state.is_done("thumbnail"):
         try:
-            thumb_path = generate_thumbnail(draft, MEDIA_DIR)
+            thumb_path = generate_thumbnail(draft, MEDIA_DIR, niche=draft.get("niche"))
             state.complete_stage("thumbnail", {"path": str(thumb_path)})
         except Exception as e:
             log(f"Thumbnail generation failed: {e} — uploading without thumbnail")
