@@ -156,8 +156,12 @@ class TestHasAssFilter:
 
 
 class TestWhisperWordTimestamps:
-    def test_returns_empty_when_whisper_missing(self, tmp_path):
-        # whisper is not installed in the test env -> ImportError -> [].
+    def test_returns_empty_when_whisper_missing(self, tmp_path, monkeypatch):
+        # Force the import to fail rather than relying on whisper being absent.
+        # It is absent in CI but present on any machine that installed
+        # requirements.txt, where this test used to load a real Whisper model
+        # and shell out to real ffmpeg — slow, and not a mocked test at all.
+        monkeypatch.setitem(sys.modules, "whisper", None)
         assert captions._whisper_word_timestamps(tmp_path / "a.mp3") == []
 
     def test_parses_segments(self, tmp_path):

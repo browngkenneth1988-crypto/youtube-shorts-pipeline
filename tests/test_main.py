@@ -214,9 +214,12 @@ class TestCmdRun:
              patch("verticals.__main__.cmd_upload", return_value="https://youtu.be/CCC") as up:
             cli.cmd_run(args)
         draft.assert_called_once()
-        # produce/upload receive the draft path from cmd_draft.
-        assert prod.call_args.args[0].draft == "/x/d.json"
-        assert up.call_args.args[0].draft == "/x/d.json"
+        # produce/upload receive the draft path from cmd_draft. Compared via
+        # str(Path(...)) because cmd_run stringifies a Path, which renders with
+        # backslashes on Windows — the literal "/x/d.json" only matches on POSIX.
+        expected = str(Path("/x/d.json"))
+        assert prod.call_args.args[0].draft == expected
+        assert up.call_args.args[0].draft == expected
 
 
 # --------------------------------------------------------------------------- #

@@ -11,6 +11,17 @@ import pytest
 from verticals import config
 from verticals.config import _get_key, extract_keywords, load_config
 
+# Windows has no POSIX mode bits: os.open(..., 0o600) only toggles the
+# read-only attribute there and st_mode reports something like 0o666, so the
+# assertion cannot hold. The 0600 guarantee is still enforced on POSIX, which
+# is where these secrets files are actually exposed to other accounts —
+# skipped, deliberately, rather than weakened to something that passes
+# everywhere and checks nothing.
+POSIX_PERMS_ONLY = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="POSIX mode bits are not implemented on Windows",
+)
+
 
 class TestGetKey:
     def test_env_var_priority(self):
@@ -127,6 +138,7 @@ class TestWriteSecretFile:
         config.write_secret_file(p, "top-secret")
         assert p.read_text() == "top-secret"
 
+    @POSIX_PERMS_ONLY
     def test_permissions_are_0600(self, tmp_path):
         p = tmp_path / "secret.txt"
         config.write_secret_file(p, "x")
@@ -297,6 +309,7 @@ class TestGetYoutubeTokenPath:
 
 
 class TestSaveConfig:
+    @POSIX_PERMS_ONLY
     def test_writes_json_with_restricted_perms(self, tmp_path):
         cfg_file = tmp_path / "config.json"
         with patch("verticals.config.SKILL_DIR", tmp_path), \
