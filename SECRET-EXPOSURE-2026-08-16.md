@@ -5,8 +5,21 @@ Scope: `browngkenneth1988-crypto/youtube-shorts-pipeline` (public fork of
 
 ## Three secrets, one file, two commits
 
-All in `scripts/daily_run.bat`, commits `cb2723a` and `42e0ee1`, on branch
-`claude/automate-youtube-shorts-ujgkW` only. **Not in `main`.**
+All in `scripts/daily_run.bat`, on branch `claude/automate-youtube-shorts-ujgkW`
+only. **Not in `main`.**
+
+The exposed commits are **`cb2723a`** (added the keys) and **`c949a90`** (carries
+the same blob forward). Both still return the file with all three keys in
+plaintext. `42e0ee1` is the commit that **removed** them and contains none — an
+earlier version of this document named it as an exposed commit, which was wrong.
+`git log --find-object` matches a blob's removal as well as its addition, and
+that is what misled. Verified against the live API:
+
+| Commit | Credentials returned |
+|---|---|
+| `cb2723a` | 3 |
+| `c949a90` | 3 |
+| `42e0ee1` | 0 |
 
 | Secret | First tested 2026-08-16 | Now |
 |---|---|---|
@@ -65,10 +78,20 @@ matches are variable assignments (`api_key = get_gemini_key()`), not literals.
 > Repository: browngkenneth1988-crypto/youtube-shorts-pipeline
 > Fork network root: rushindrasinha/youtube-shorts-pipeline
 >
-> Two commits contain plaintext API keys in `scripts/daily_run.bat`:
+> Two commits expose plaintext API keys in `scripts/daily_run.bat`, at lines
+> 8-10 (`GEMINI_API_KEY`, `LEONARDO_API_KEY`, `ELEVENLABS_API_KEY`):
 > - cb2723ae9e7587e5a4b9c94230cb595a365426f5
-> - 42e0ee1b1a08236b08156a8555cc1af379926602
+> - c949a90ed19772fdb178f59ab62dc4b099cab56f
 >
-> The credentials have been revoked. These commits are still anonymously
-> retrievable by SHA through the parent repository's fork network. Please purge
-> these objects from the network cache.
+> All three credentials have already been revoked and verified dead, so this is
+> a cleanup request, not an active incident. The branch carrying these commits
+> has been deleted from my fork, but the objects stay anonymously retrievable by
+> SHA through the parent repository's fork network, so self-service history
+> rewriting cannot reach them. Please purge these objects from the network cache.
+
+Note before sending: GitHub's private-information form at
+`support.github.com/contact/private-information` is scoped to credentials
+*someone else* posted without authorization, and it redirects owners of the
+repository to self-service instructions. It also asks how each item poses a
+security risk — and for revoked keys, none does. Expect this to be declined,
+and do not overstate the risk to get it accepted.

@@ -3,10 +3,21 @@
 #
 # Why an allowlist exists at all:
 #
-# Commits cb2723a and 42e0ee1 on branch claude/automate-youtube-shorts-ujgkW
-# contain three plaintext API keys in scripts/daily_run.bat. All three are dead
-# (Gemini and Leonardo revoked; ElevenLabs revoked 2026-08-16 — verified by API
-# probe, see SECRET-EXPOSURE-2026-08-16.md).
+# scripts/daily_run.bat once held three plaintext API keys. All three are dead
+# (Gemini and Leonardo revoked earlier; ElevenLabs revoked 2026-08-16 — verified
+# by API probe, see SECRET-EXPOSURE-2026-08-16.md).
+#
+# Which commit is which — an earlier version of this file got this wrong:
+#
+#   cb2723a  ADDED the keys. The only commit gitleaks reports, because it
+#            scans added lines in diffs, so this is the only SHA that needs
+#            allowlisting.
+#   c949a90  carries the same blob forward untouched. No diff, so no finding —
+#            but the file IS still fetchable at this SHA, which is why the
+#            GitHub purge request must name it alongside cb2723a.
+#   42e0ee1  REMOVED the keys. Contains none. It was previously listed here as
+#            containing them; it does not. `git log --find-object` matches a
+#            blob's removal as well as its addition, which is what misled.
 #
 # The commits are NOT rewritten out of history on purpose. This repo is a fork
 # of rushindrasinha/youtube-shorts-pipeline (515 forks) and GitHub shares object
@@ -15,17 +26,18 @@
 # force-push over 29 commits of real work and remove nothing. Revocation was the
 # fix; only GitHub Support can purge the network cache.
 #
-# So CI would fail forever on already-dead keys. These two SHAs are allowlisted
+# So CI would fail forever on already-dead keys. The SHA below is allowlisted
 # by exact commit — NOT by path or regex — so any NEW secret in
-# scripts/daily_run.bat, or anywhere else, still fails the scan.
+# scripts/daily_run.bat, or anywhere else, still fails the scan. That property
+# is asserted by step C of the verification described in the commit that added
+# the full-history sweep.
 
 [extend]
 useDefault = true
 
 [[allowlists]]
-description = "Revoked keys in scripts/daily_run.bat; history intentionally not rewritten (fork network)"
+description = "Revoked keys added in cb2723a; history intentionally not rewritten (fork network)"
 targetRules = []
 commits = [
   "cb2723ae9e7587e5a4b9c94230cb595a365426f5",
-  "42e0ee1b1a08236b08156a8555cc1af379926602",
 ]
