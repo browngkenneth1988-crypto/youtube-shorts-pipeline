@@ -26,7 +26,7 @@ docs. Known mismatches (verified against source):
 | Docs claim | Actual code |
 |---|---|
 | Layout `verticals/providers/` + `verticals/stages/` | **Flat** — every module lives directly under `verticals/`. Only `verticals/topics/` is a subpackage. |
-| CLI flag `--topic` | The flag is **`--news`** (SKILL.md is correct; README is wrong). |
+| CLI flag `--topic` | **Now accurate.** `--topic` is a registered alias of `--news` on `draft` and `run`, and is the required flag on `score`. This table used to deny it. |
 | `python -m verticals ui` (Gradio) | **No `ui` subcommand** and no `ui/` dir. |
 | `python -m verticals migrate` | **Not implemented.** |
 | `--visuals` flag | **Not a CLI flag.** B-roll provider is not user-selectable. |
@@ -109,14 +109,20 @@ python -m verticals run --discover --auto-pick --niche gaming    # pick a trendi
 python -m verticals draft --news "headline" --niche finance --provider gemini
 python -m verticals produce --draft <path.json> --voice edge --lang en
 python -m verticals upload --draft <path.json> --lang en
+python -m verticals score --topic "headline" --niche curious_classroom
 python -m verticals topics --niche tech --limit 20               # list trending topics
 python -m verticals niches                                       # list niche profiles
 ```
 
-Flags: `--news` (topic), `--niche`, `--provider` (claude|gemini|openai|ollama),
-`--voice` (edge|elevenlabs|say), `--platform` (shorts|reels|tiktok|all),
-`--lang` (en|hi|es|pt|de|fr|ja|ko), `--discover`, `--auto-pick`, `--dry-run`,
-`--force`, `--verbose`/`-v`. There is **no `--topic` and no `--visuals`** flag.
+Seven subcommands are registered: `draft`, `score`, `produce`, `upload`, `run`,
+`topics`, `niches`. `score` runs the `score.py` gate on its own without writing
+a script — useful for triaging a topic queue.
+
+Flags: `--news` / `--topic` (aliases, same `dest`), `--niche`, `--provider`
+(claude|gemini|openai|ollama), `--voice` (edge|elevenlabs|say), `--platform`
+(shorts|reels|tiktok|all), `--lang` (en|hi|es|pt|de|fr|ja|ko), `--discover`,
+`--auto-pick`, `--dry-run`, `--force`, `--verbose`/`-v`. There is still no
+`--visuals` flag — the b-roll provider is chosen by the niche, not the CLI.
 
 On first run, if `~/.verticals/config.json` is missing, `main()` launches the
 interactive `run_setup()` wizard and exits.
