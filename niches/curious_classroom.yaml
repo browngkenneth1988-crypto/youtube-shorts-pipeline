@@ -7,10 +7,23 @@ description: "Faceless educational entertainment. Mini-documentaries and explain
 # Canon source: curious-classroom-playbook v1.3 (Aug 1 2026)
 # ─────────────────────────────────────────────────────
 channel:
-  name: "Curious Classroom"
+  name: "Curious Classroom TV"
   tagline: "Big ideas explained simply"
-  handle: "@CuriousClassroomTV"          # @CuriousClassroom was taken (Aug 4 2026)
-  channel_id: "UC5e4hQ3xUvbT4Mci34nNsSA" # created Aug 4 2026, verified in the switcher
+  # Repointed 2026-08-16. This is the former "Whispered Wonders" channel,
+  # renamed. The original Curious Classroom (UC5e4hQ3xUvbT4Mci34nNsSA, created
+  # Aug 4 2026) is still there but empty and NOT phone-verified, so custom
+  # thumbnails 403 on it — verified with a real upload. Kenneth had already
+  # used his phone's two channel verifications for the year, so the working
+  # move was to adopt a channel that was already verified rather than verify
+  # a new one. This one has all three feature tiers enabled.
+  #
+  # The handle carries a -z6b suffix because the clean @CuriousClassroomTV is
+  # still held by the empty channel. Freeing it failed: YouTube gates handle
+  # changes behind a re-auth step whose endpoint returns 400 in this browser
+  # (get_web_reauth_url). If that is ever resolved, free the handle on the
+  # empty channel and claim it here, then update this block.
+  handle: "@CuriousClassroomTV-z6b"
+  channel_id: "UCiyypuFfsQ8eY8aFYzN-uSw"
   promise: "Every video teaches the viewer something interesting, strange, or useful — simply."
   audience: "Curious teens, adults, and families. People who like knowing why things happen."
   # No channel-name tags. No branding in the first 60 chars of a title.
