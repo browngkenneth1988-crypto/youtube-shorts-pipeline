@@ -1,0 +1,34 @@
+# Local gates. Install once with:  py -3 -m pre_commit install
+#
+# gitleaks is first and non-negotiable: this repo has already had keys land in
+# history once (see the _backup_* entry in .gitignore). A pre-commit scan is the
+# cheapest place to catch the next one; CI re-scans full history weekly in case
+# a commit gets through with --no-verify.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.3
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      # Keeps rendered mp4s and model weights out. Set above 5MB because the
+      # licensed music/ library is versioned deliberately — those tracks are the
+      # only copy and the renderer needs them; a fresh clone must be able to build.
+      - id: check-added-large-files
+        args: [--maxkb=10000]
+      - id: check-yaml         # niches/*.yaml are load-bearing config
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]

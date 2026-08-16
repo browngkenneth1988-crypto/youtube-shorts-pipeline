@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "verticals"
@@ -10,7 +10,9 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 dependencies = [
-    "anthropic>=0.39.0,<1.0",
+    # 0.120 is the floor that accepts output_config on messages.create, which
+    # the Claude path in verticals/llm.py passes.
+    "anthropic>=0.120.0,<1.0",
     "requests>=2.31.0,<3.0",
     "Pillow>=10.0.0,<11.0",
     "feedparser>=6.0.0,<7.0",
@@ -23,7 +25,42 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "pytest-mock>=3.0"]
+dev = ["pytest>=7.0", "pytest-mock>=3.0", "ruff>=0.16", "pre-commit>=4.0"]
 
 [tool.setuptools.packages.find]
 include = ["verticals*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["_backup_*", "drafts", "media", "logs"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes — unused imports/names, the ones that bite
+    "I",        # import sorting
+    "B",        # bugbear — mutable defaults, shadowed loop vars
+    "UP",       # pyupgrade
+    "C4",       # comprehensions
+    "T20",      # print in library code (scripts/ is exempt below)
+]
+ignore = [
+    "E501",     # line length is handled by the formatter, not the linter
+    "B008",     # call-in-default is deliberate in a few CLI signatures
+]
+
+[tool.ruff.lint.per-file-ignores]
+# These are CLIs and their whole job is printing to a scheduled-task log.
+# E402 rides along because each entry point must sys.path.insert the project
+# root before it can import `verticals` at all.
+"scripts/*" = ["T20", "E402"]
+"make_checkpoint_triggers.py" = ["T20", "E402", "E702"]
+"verticals/__main__.py" = ["T20"]
+"verticals/config.py" = ["T20"]   # interactive first-run setup
+"verticals/score.py" = ["T20"]    # prints the scorecard for the operator
+"tests/*" = ["T20"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
