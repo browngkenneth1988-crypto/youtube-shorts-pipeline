@@ -32,22 +32,36 @@ channel:
   tags: []
 
 # ─────────────────────────────────────────────────────
-# Publishing Policy — read by verticals/publish.py
-# Phase 1 = videos 1-8, one long-form per week, NO Shorts.
-# Flip phase to 2 only after video 8 is live.
+# Publishing Policy
+#
+# Only `phase` and `shorts_blocked_reason` are read by code
+# (verticals/publish.py). Everything else here is documentation — nothing in
+# this repo schedules anything, so the cadence fields exist to state the plan
+# and brief future sessions, not to drive behaviour.
+#
+# 2026-08-16: the original plan (Phase 1 = videos 1-8, one long-form per week,
+# no derivative Shorts) was SUPERSEDED. The channel now ships a Short every
+# two days, scheduled by hand in Studio.
+#
+# Recorded honestly: `phase` was already 2 before video 8 existed, so the old
+# rule's own precondition was never met. The new cadence replaces that rule
+# rather than satisfying it.
 # ─────────────────────────────────────────────────────
 publishing:
   phase: 2
   shorts_allowed: true
   shorts_blocked_reason: >-
-    Curious Classroom Phase 1 (videos 1-8) is one long-form per week and no derivative
-    Shorts. Shorts split attention on a channel with no baseline. Set publishing.phase to 2
-    in niches/curious_classroom.yaml once video 8 is live, then shorts_allowed becomes true.
-  privacy: "private"
+    Shorts are disabled for this niche. Flip publishing.shorts_allowed to true in
+    niches/curious_classroom.yaml, or set YT_SHORTS_ALLOWED=true for a one-off run.
+  privacy: "private"          # uploads land private; scheduled manually in Studio
   made_for_kids: false
   category_id: "27"          # Education
-  publish_day: "sunday"
+  cadence_days: 2            # a Short every second day
   publish_window_et: "09:00-11:00"
+  # No publish_day: a two-day cycle walks through the week, so a fixed weekday
+  # is meaningless. The window is a starting hypothesis, not a finding — the
+  # channel has no watch history to optimise against yet. Revisit once 8-10
+  # videos have real retention and traffic-source data.
   same_day_as_longform: false
 
 # ─────────────────────────────────────────────────────
