@@ -215,3 +215,42 @@ class TestNicheDrivenPrompt:
     def test_channel_context_reaches_prompt(self):
         p = self._prompt_for({}, channel_context="esports news")
         assert "esports news" in p
+
+    def test_model_is_not_asked_to_append_the_suffix(self):
+        # Asking for it here AND appending after parsing put the suffix into
+        # every b-roll prompt twice; the append is the reliable half.
+        p = self._prompt_for({"visuals": {"prompt_suffix": "SUFFIX_TOKEN"}})
+        assert "Append to every b-roll prompt" not in p
+
+
+class TestBrollSuffix:
+    SUFFIX = "photoreal, natural light, no watermark"
+    PROFILE = {"visuals": {"prompt_suffix": SUFFIX}}
+
+    def _broll(self, prompts):
+        payload = dict(VALID, broll_prompts=prompts)
+        with patch("verticals.draft.research_topic", return_value="research"), \
+             patch("verticals.draft.load_niche", return_value=self.PROFILE), \
+             patch("verticals.draft.call_llm", return_value=json.dumps(payload)):
+            return generate_draft("Test")["broll_prompts"]
+
+    def test_suffix_appended_once(self):
+        out = self._broll(["a doorway"])
+        assert out[0] == f"a doorway. {self.SUFFIX}"
+        assert out[0].lower().count(self.SUFFIX.lower()) == 1
+
+    def test_not_appended_twice_when_model_volunteers_it(self):
+        # Regression: a real run shipped every prompt with the suffix doubled.
+        out = self._broll([f"a doorway. {self.SUFFIX}"])
+        assert out[0].lower().count(self.SUFFIX.lower()) == 1
+
+    def test_match_is_case_insensitive(self):
+        out = self._broll([f"a doorway. {self.SUFFIX.upper()}"])
+        assert out[0].lower().count(self.SUFFIX.lower()) == 1
+
+    def test_no_suffix_configured_leaves_prompts_alone(self):
+        payload = dict(VALID, broll_prompts=["a doorway"])
+        with patch("verticals.draft.research_topic", return_value="research"), \
+             patch("verticals.draft.load_niche", return_value={"visuals": {"prompt_suffix": ""}}), \
+             patch("verticals.draft.call_llm", return_value=json.dumps(payload)):
+            assert generate_draft("Test")["broll_prompts"] == ["a doorway"]

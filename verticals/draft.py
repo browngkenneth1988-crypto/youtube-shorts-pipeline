@@ -88,9 +88,10 @@ def generate_draft(
             vis_parts.append(f"Preferred subjects: {', '.join(subjects['prefer'][:5])}")
         if subjects.get("avoid"):
             vis_parts.append(f"Avoid: {', '.join(subjects['avoid'][:3])}")
-        suffix = visual_context.get("prompt_suffix", "")
-        if suffix:
-            vis_parts.append(f"Append to every b-roll prompt: {suffix}")
+        # Deliberately does NOT ask the model to append prompt_suffix. The
+        # suffix is appended programmatically after parsing, and asking for it
+        # here too got it into every prompt twice. Style/mood/subjects above
+        # already steer subject choice, which is what the model is for.
         if vis_parts:
             visual_guidance = "\nB-ROLL VISUAL GUIDANCE:\n" + "\n".join(vis_parts)
 
@@ -261,11 +262,14 @@ Output ONLY a valid JSON object, nothing else. Start with {{ and end with }}:
         else:
             draft["broll_prompts"] = [str(p) for p in draft["broll_prompts"][:3]]
 
-    # Append visual prompt suffix to b-roll prompts
+    # Append visual prompt suffix to b-roll prompts. Idempotent: the model
+    # sometimes volunteers the style wording on its own, and appending
+    # unconditionally then shipped it twice in one prompt.
     suffix = get_visual_prompt_suffix(profile)
     if suffix and "broll_prompts" in draft:
         draft["broll_prompts"] = [
-            f"{p}. {suffix}" for p in draft["broll_prompts"]
+            p if suffix.lower() in p.lower() else f"{p}. {suffix}"
+            for p in draft["broll_prompts"]
         ]
 
     draft["news"] = news

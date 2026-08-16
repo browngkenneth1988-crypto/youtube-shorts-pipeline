@@ -100,3 +100,38 @@ class TestSelectAndPrepareMusic:
             result = music.select_and_prepare_music(tmp_path / "vo.mp3", tmp_path)
         assert result["track_path"] == str(track)
         assert result["duck_filter"].startswith("volume=")
+
+
+class TestSpeechRegionsReuseWhisper:
+    """Whisper is the slowest stage; the captions stage has already run it."""
+
+    WORDS = [
+        {"word": "one", "start": 0.0, "end": 0.4},
+        {"word": "two", "start": 0.5, "end": 0.9},
+        {"word": "three", "start": 5.0, "end": 5.4},  # >0.5s gap -> new region
+    ]
+
+    def test_supplied_words_are_used_without_transcribing(self, tmp_path):
+        with patch("verticals.captions._whisper_word_timestamps") as whisper:
+            regions = music._get_speech_regions(tmp_path / "vo.mp3", words=self.WORDS)
+        whisper.assert_not_called()
+        assert regions == [(0.0, 0.9), (5.0, 5.4)]
+
+    def test_falls_back_to_whisper_when_words_absent(self, tmp_path):
+        # The resume path reaches music without captions having run this time.
+        with patch("verticals.captions._whisper_word_timestamps",
+                   return_value=self.WORDS) as whisper:
+            regions = music._get_speech_regions(tmp_path / "vo.mp3")
+        whisper.assert_called_once()
+        assert regions == [(0.0, 0.9), (5.0, 5.4)]
+
+    def test_select_and_prepare_music_threads_words_through(self, tmp_path):
+        track = tmp_path / "song.mp3"
+        track.write_bytes(b"x")
+        with patch("verticals.music._find_tracks", return_value=[track]), \
+             patch("verticals.music.random.choice", return_value=track), \
+             patch("verticals.captions._whisper_word_timestamps") as whisper:
+            music.select_and_prepare_music(
+                tmp_path / "vo.mp3", tmp_path, words=self.WORDS
+            )
+        whisper.assert_not_called()

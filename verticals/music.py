@@ -30,14 +30,21 @@ def _find_tracks(niche: str = None) -> list[Path]:
     return tracks if tracks else sorted(MUSIC_DIR.rglob("*.mp3"))
 
 
-def _get_speech_regions(audio_path: Path) -> list[tuple[float, float]]:
-    """Extract speech regions from Whisper word timestamps (reuses captions data).
+def _get_speech_regions(audio_path: Path, words: list[dict] | None = None) -> list[tuple[float, float]]:
+    """Extract speech regions from Whisper word timestamps.
+
+    Pass `words` from generate_captions when you have them. Whisper is the
+    slowest stage in the pipeline and the captions stage has already run it on
+    this exact audio — recomputing here transcribed every video twice, for
+    identical output. Only falls back to running Whisper itself when called
+    without words, e.g. a `produce --force` that resumes past captions.
 
     Falls back to treating the entire audio as one speech region.
     """
     try:
-        from .captions import _whisper_word_timestamps
-        words = _whisper_word_timestamps(audio_path)
+        if words is None:
+            from .captions import _whisper_word_timestamps
+            words = _whisper_word_timestamps(audio_path)
         if words:
             # Merge close words into speech regions (gap < 0.5s = same region)
             regions = []
@@ -92,6 +99,7 @@ def select_and_prepare_music(
     duck_speech: float = 0.12,
     duck_gap: float = 0.25,
     niche: str = None,
+    words: list[dict] | None = None,
 ) -> dict:
     """Select a random track, build duck filter from speech regions.
 
@@ -106,7 +114,7 @@ def select_and_prepare_music(
     log(f"Selected music track: {track.name} ({len(tracks)} available)")
 
     # Get speech regions for ducking
-    speech_regions = _get_speech_regions(voiceover_path)
+    speech_regions = _get_speech_regions(voiceover_path, words=words)
     duck_filter = build_duck_filter(speech_regions, vol_speech=duck_speech, vol_gap=duck_gap)
     log(f"Built duck filter with {len(speech_regions)} speech regions")
 

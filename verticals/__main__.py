@@ -161,6 +161,10 @@ def cmd_produce(args):
             vo_path, work_dir,
             duck_speech=music_config.get("duck_volume_speech", 0.12),
             duck_gap=music_config.get("duck_volume_gap", 0.25),
+            # Reuse the captions stage's timestamps instead of transcribing the
+            # same audio a second time. Empty on the resume path, where music
+            # falls back to running Whisper itself.
+            words=captions_result.get("words"),
         )
         state.complete_stage("music", {
             "track_path": str(music_result.get("track_path", "")),

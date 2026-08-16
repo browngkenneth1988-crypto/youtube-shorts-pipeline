@@ -196,6 +196,25 @@ visuals:
 
   prompt_suffix: "photorealistic documentary photography, natural lighting, fine detail, muted natural color, no text, no lettering, no watermark"
 
+  # Route b-roll through Leonardo.ai rather than Gemini Imagen.
+  #
+  # Gemini's image model returns `limit: 0` on the free tier — not an
+  # exhausted quota, but no allocation at all — so every frame fell through
+  # to broll.py's solid-colour fallback. A full run on 2026-08-16 produced a
+  # technically valid 56s Short whose visuals were three flat rectangles.
+  # Gemini TEXT still works and still drafts the script; this only moves image
+  # generation.
+  #
+  # No init_strength here, unlike pets: that pins generations to a character
+  # reference sheet (Otto), and this channel has no recurring character. Each
+  # frame is a standalone documentary still, so it generates from the prompt
+  # alone.
+  leonardo:
+    provider: leonardo
+    model_id: "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3"  # Leonardo Phoenix 1.0
+    contrast: 3.5
+    num_images: 1
+
 # ─────────────────────────────────────────────────────
 # Voice Intelligence — LOCKED Aug 1 2026, do not relitigate
 # One voice, forever. Changing narrator makes a channel sound like a content farm.
