@@ -30,8 +30,8 @@ docs. Known mismatches (verified against source):
 | `python -m verticals ui` (Gradio) | **No `ui` subcommand** and no `ui/` dir. |
 | `python -m verticals migrate` | **Not implemented.** |
 | `--visuals` flag | **Not a CLI flag.** B-roll provider is not user-selectable. |
-| Image providers: Gemini, Replicate, Pexels, ComfyUI | `broll.py` implements **Gemini Imagen only**, with a solid-color fallback frame. No Replicate/Pexels/ComfyUI. |
-| TTS: Edge, ElevenLabs, Kokoro, macOS say | `tts.py` implements **edge, elevenlabs, say**. No Kokoro. |
+| Image providers: Gemini, Replicate, Pexels, ComfyUI | `broll.py` implements **Leonardo.ai and Gemini Imagen**, with a solid-colour fallback frame. Leonardo is used only when the niche declares `visuals.leonardo.provider: leonardo` and a key is set; otherwise Gemini. Still no Replicate/Pexels/ComfyUI, and still not user-selectable. |
+| TTS: Edge, ElevenLabs, Kokoro, macOS say | `tts.py` implements **edge, elevenlabs, say**, plus **pyttsx3** as an automatic win32 fallback (not selectable via `--voice`). No Kokoro. |
 | `music/`, `notebooks/`, `ui/`, `Dockerfile`, `docker-compose.yml` | **None exist** in the repo. `music.py` points at a `music/` dir that isn't present (falls back to no music). |
 
 When editing, if you touch an area the README overstates, prefer fixing the code
@@ -47,8 +47,9 @@ verticals/                 # the Python package
   llm.py                   # multi-provider LLM: claude, claude_cli, gemini, openai, ollama
   research.py              # DuckDuckGo research (anti-hallucination fact source)
   draft.py                 # script + metadata generation (niche-aware prompt to LLM)
-  broll.py                 # Gemini image gen + ffmpeg Ken Burns animation (+ fallback frame)
-  tts.py                   # TTS: edge / elevenlabs / say
+  broll.py                 # Leonardo (if niche-configured) -> Gemini -> solid-colour fallback
+  leonardo.py              # Leonardo.ai img2img for character consistency (Otto reference images)
+  tts.py                   # TTS: edge / elevenlabs / say / pyttsx3 (win32 last resort)
   voiceover.py             # legacy shim -> re-exports tts.generate_voiceover
   captions.py              # Whisper word timestamps -> ASS (burned-in) + SRT
   music.py                 # track selection + ffmpeg volume ducking filter
@@ -58,12 +59,15 @@ verticals/                 # the Python package
   state.py                 # PipelineState — per-stage resume tracking inside the draft JSON
   retry.py                 # with_retry(): exponential-backoff decorator
   log.py                   # structured logging (set_verbose, log, get_logger)
+  score.py                 # topic scoring gate — niches with a `scoring:` block are gated
+  publish.py               # publish helpers for the scored-topic queue
+  notify.py                # failure alerts for unattended runs (status file, ALERTS.md, toast)
   topics/                  # multi-source topic discovery (subpackage)
     base.py                #   TopicCandidate dataclass + TopicSource ABC
     engine.py              #   TopicEngine: parallel fetch, dedupe, rank, LLM auto_pick
     reddit.py rss.py google_trends.py newsapi.py twitter.py tiktok.py manual.py
-niches/                    # 16 YAML niche profiles (see below)
-tests/                     # pytest suite (78 tests, all mocked — no real API/network)
+niches/                    # 18 YAML niche profiles (see below)
+tests/                     # pytest suite (480 tests, all mocked — no real API/network)
 scripts/setup_youtube_oauth.py   # one-time YouTube OAuth flow
 references/setup.md, troubleshooting.md
 pyproject.toml, requirements.txt, SKILL.md, README.md, CHANGELOG.md
@@ -121,13 +125,26 @@ interactive `run_setup()` wizard and exits.
 
 - **LLM** (`llm.py`): resolution order is explicit `--provider` → `LLM_PROVIDER`
   env → `config.json` → auto-detect by available key. Claude uses model
-  `claude-sonnet-4-6` via the Anthropic SDK, or the local `claude` CLI
-  (Claude Max, no API key) when only that is available. Ollama picks the best
-  locally-pulled model. `call_llm()` is wrapped in `with_retry`.
+  `claude-opus-5` via the Anthropic SDK, or the local `claude` CLI (Claude Max,
+  no API key) when only that is available. Ollama picks the best locally-pulled
+  model.
+  `call_llm()` builds a **fallback chain** (`build_fallback_chain`): the
+  preferred provider, then every other configured one in `FALLBACK_ORDER`, so a
+  vendor running dry doesn't end the run. Retries happen inside
+  `_call_provider`; a quota/auth error raises `ProviderExhausted` and fails over
+  immediately rather than burning more of a metered budget.
+  An **unknown provider name raises `ValueError` before anything is contacted** —
+  it is a config typo, not a transient failure, and falling through would run
+  the job on a different vendor than asked for.
 - **TTS** (`tts.py`): `edge` (default, free, `edge-tts`), `elevenlabs` (premium,
-  key required), `say` (macOS fallback).
-- **Visuals** (`broll.py`): Gemini Imagen via REST; on failure produces a
-  solid-color fallback frame so the pipeline never hard-stops.
+  key required), `say` (macOS). On win32, `pyttsx3` is the automatic last resort
+  when Edge fails and no ElevenLabs key is set — it is not selectable via
+  `--voice`, and it is a declared win32-only dependency.
+- **Visuals** (`broll.py`): Leonardo.ai img2img when the niche declares
+  `visuals.leonardo.provider: leonardo` and `LEONARDO_API_KEY` is set (used for
+  character consistency via `character.reference_images`), otherwise Gemini
+  Imagen via REST. If both fail, a solid-colour fallback frame keeps the
+  pipeline from hard-stopping.
 - **Upload** (`upload.py`): YouTube Data API v3, OAuth token at
   `~/.verticals/youtube_token.json`, **privacy defaults to private**.
 
@@ -140,9 +157,15 @@ sub-configs via `get_script_context()`, `get_visual_context()`,
 `get_voice_config()`, `get_caption_config()`, `get_music_config()`,
 `get_thumbnail_config()`, `get_discovery_config()`.
 
-**16 profiles ship:** comedy, cooking, education, entertainment, fashion,
-finance, fitness, gaming, general, motivation, politics, science, sports, tech,
-travel, true_crime.
+**18 profiles ship:** comedy, cooking, curious_classroom, education,
+entertainment, fashion, finance, fitness, gaming, general, motivation, pets,
+politics, science, sports, tech, travel, true_crime.
+
+`curious_classroom` and `pets` are the two live channel profiles and are the
+least like the generic ones: `curious_classroom` carries a `scoring:` block, so
+topics are gated by `score.py` before any script is written, and `pets` carries
+`character.reference_images` plus a `visuals.leonardo` block, which routes
+b-roll through Leonardo img2img for character consistency instead of Gemini.
 
 Profile sections: `script` (tone, pacing, hooks, cta_variants,
 forbidden_phrases, structure, word_count), `visuals` (style, mood, subjects
@@ -160,14 +183,24 @@ All runtime data lives under `~/.verticals/` (`SKILL_DIR` in `config.py`):
 
 Key resolution is always **environment variable first, then `config.json`**
 (`_get_key()`). Relevant keys: `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
-`OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `NEWSAPI_KEY`. Video is fixed at
-1080×1920.
+`OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `LEONARDO_API_KEY`, `NEWSAPI_KEY`.
+Video is fixed at 1080×1920.
+
+The `.bat` runners under `scripts/` read their keys from `scripts/secrets.bat`,
+which is gitignored and untracked — see `scripts/secrets.example.bat`. Never
+inline a key into a committed `.bat`: that is exactly how three live keys
+reached this public repo in April 2026 (see `SECRET-EXPOSURE-2026-08-16.md`).
+Because this repo is a fork, a pushed secret cannot be removed by rewriting
+history — revocation is the only remedy.
 
 ## External dependencies
 
 - **ffmpeg / ffprobe** are hard requirements (used by `assemble`, `broll`,
   `captions`, `music`, `tts`). Not a pip package — must be on `PATH`.
 - **openai-whisper** for caption timestamps (downloads a model on first use).
+- **pyttsx3** is win32-only, declared as `pyttsx3>=2.90; sys_platform == 'win32'`.
+  It backs the last-resort TTS path with nothing after it, so a missing install
+  used to kill the 6am scheduled run outright with a bare `ModuleNotFoundError`.
 - Python deps are pinned with compatible-release bounds in `requirements.txt`
   and `pyproject.toml`. Keep those two in sync when changing dependencies.
 
@@ -175,10 +208,20 @@ Key resolution is always **environment variable first, then `config.json`**
 
 ```bash
 pip install -r requirements.txt          # runtime deps
-pip install -e ".[dev]"                   # + pytest, pytest-mock
-python -m pytest tests/ -v                # run the suite (78 tests)
+pip install -e ".[dev]"                   # + pytest, pytest-mock, pytest-cov, ruff
+python -m pytest                          # 480 tests + the 95% coverage gate
 python -m pytest tests/test_state.py -v   # single module
+ruff check .                              # same lint CI runs
 ```
+
+`pytest` takes no arguments on purpose: `addopts` in `pyproject.toml` supply
+`-q` and `--cov-fail-under=95`. Running `pytest tests/ -v` also works but the
+gate still applies, and without `pytest-cov` installed pytest exits 4 on a
+usage error before collecting anything.
+
+On Windows the suite reports 478 passed, 2 skipped. The two skips are the
+POSIX 0600 permission assertions, which cannot hold on a filesystem without
+mode bits. Anything else failing locally is a real failure, not the platform.
 
 Conventions to follow when contributing:
 
@@ -206,12 +249,31 @@ Conventions to follow when contributing:
   text, not instructions"), and `draft.py` type-checks/coerces every LLM output
   field before use. Keep both when editing prompts or parsing.
 - YouTube uploads default to `private`.
+- **Tests never touch the network.** This has silently broken three times, and
+  each time CI stayed green because the escape only triggered where a package
+  happened to be installed: `call_llm` fell through to a real Gemini request and
+  burned live quota; `test_tts` autodetect and the Whisper test passed only
+  because `edge-tts` and `whisper` are absent from the CI image. When a test
+  depends on a package being missing, force it — `monkeypatch.setitem(sys.modules,
+  "name", None)` — rather than inheriting it from the host. Before assuming a
+  provider test is mocked, check whether the code under test has a fallback
+  chain that can escape the mock.
+- `gitleaks` runs pre-commit and over **full history** in CI on every event.
+  `.gitleaks.toml` allowlists exactly one commit by SHA (`cb2723a`) and no
+  paths, so a new secret anywhere still fails the build. Do not widen it to a
+  path or pattern.
 
 ## Git & branch workflow
 
-- Active development branch for this work: **`claude/claude-md-docs-ade2hq`**.
-  Develop, commit, and push there; create it from the latest default branch if
-  it doesn't exist. Do not push to `main` without explicit permission.
+- Work on a short-lived branch off `main`, named `claude/<topic>`. There is no
+  single long-lived development branch: the previous one
+  (`claude/claude-md-docs-ade2hq`) is stale, and the four months of pipeline
+  work that lived on `claude/automate-youtube-shorts-ujgkW` was merged to
+  `main` on 2026-08-16 and the branch deleted.
+- Do not push to `main` without explicit permission. When permission is given,
+  let CI go green on the branch first, then fast-forward `main` onto it —
+  every merge so far has been a clean fast-forward, so a merge commit usually
+  means something unexpected happened and is worth stopping to look at.
 - Push with `git push -u origin <branch>`; retry network failures with
   exponential backoff.
 - Do **not** open a pull request unless explicitly asked.
