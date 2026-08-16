@@ -30,6 +30,14 @@ py -3 scripts\batch_shorts.py --niche curious_classroom ^
     --topics-file "%USERPROFILE%\.verticals\pending_topics.txt" >> "%LOG%" 2>&1
 set RC=%ERRORLEVEL%
 
+REM Give whatever landed a publish slot. Runs even when the batch exits
+REM non-zero: a partial batch still uploaded real videos, and leaving those
+REM unscheduled is how a queue quietly stops moving. The scheduler is a no-op
+REM when there is nothing new, and honours schedule_skip.txt.
+echo. >> "%LOG%"
+echo ---- scheduling ---- >> "%LOG%"
+py -3 scripts\schedule_uploads.py --niche curious_classroom --apply >> "%LOG%" 2>&1
+
 REM Surface the outcome instead of exiting 0 into a log nobody reads --
 REM that is exactly how the 6am job failed unnoticed for months.
 py -3 -c "import sys; sys.path.insert(0, r'C:\Users\brown\youtube-shorts-pipeline'); from verticals.notify import record_status, alert; rc=%RC%; (record_status('batch_catchup', ok=True, detail='batch finished') if rc==0 else alert('batch_catchup', 'Batch exited %RC% - see batch_catchup.log'))" >> "%LOG%" 2>&1

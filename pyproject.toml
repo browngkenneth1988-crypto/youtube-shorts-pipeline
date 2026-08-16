@@ -25,6 +25,10 @@ dependencies = [
     # Windows-only last-resort TTS. verticals/tts.py falls back to it when Edge
     # fails and no ElevenLabs key is set; without it that path only raises.
     "pyttsx3>=2.90; sys_platform == 'win32'",
+    # Windows ships no system timezone database, so zoneinfo cannot resolve
+    # America/New_York. scripts/schedule_uploads.py needs it to keep the 9am
+    # publish slot at 9am across the DST boundary.
+    "tzdata; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]

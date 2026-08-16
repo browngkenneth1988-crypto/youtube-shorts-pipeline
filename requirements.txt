@@ -10,3 +10,5 @@ PyYAML>=6.0,<7.0
 edge-tts>=6.1.0,<7.0
 # Windows-only last-resort TTS; see verticals/tts.py::_generate_pyttsx3
 pyttsx3>=2.90; sys_platform == 'win32'
+# Windows has no system tz database; scripts/schedule_uploads.py needs it
+tzdata; sys_platform == 'win32'
