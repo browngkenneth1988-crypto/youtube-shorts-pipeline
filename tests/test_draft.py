@@ -68,7 +68,7 @@ class TestGenerateDraft:
             "thumbnail_prompt": "P",
         })
 
-        draft = generate_draft("Test", channel_context="esports news channel")
+        generate_draft("Test", channel_context="esports news channel")
         # Verify the channel context was passed to the LLM
         call_args = mock_llm.call_args[0][0]
         assert "esports news channel" in call_args

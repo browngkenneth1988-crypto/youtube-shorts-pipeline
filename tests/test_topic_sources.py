@@ -6,11 +6,11 @@
 import sys
 from unittest.mock import MagicMock, patch
 
+from verticals.topics.google_trends import GoogleTrendsSource
 from verticals.topics.newsapi import NewsAPISource
 from verticals.topics.rss import RSSSource
-from verticals.topics.twitter import TwitterSource
-from verticals.topics.google_trends import GoogleTrendsSource
 from verticals.topics.tiktok import TikTokSource
+from verticals.topics.twitter import TwitterSource
 
 
 # --------------------------------------------------------------------------- #

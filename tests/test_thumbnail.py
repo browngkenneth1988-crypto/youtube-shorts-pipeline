@@ -8,7 +8,7 @@ import pytest
 from PIL import Image, ImageDraw, ImageFont
 
 from verticals import thumbnail
-from verticals.thumbnail import THUMB_WIDTH, THUMB_HEIGHT
+from verticals.thumbnail import THUMB_HEIGHT, THUMB_WIDTH
 
 
 def _png_bytes(size=(320, 180), color=(30, 40, 50)):

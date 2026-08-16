@@ -134,7 +134,17 @@ def _generate_say(script: str, out_dir: Path) -> Path:
 
 def _generate_pyttsx3(script: str, out_dir: Path) -> Path:
     """Windows fallback TTS using pyttsx3 (built-in Windows voices)."""
-    import pyttsx3
+    # This is the last resort on Windows — nothing follows it — so a missing
+    # module has to say what to do about it. A bare ModuleNotFoundError here
+    # killed the 6am job outright whenever Edge TTS had a bad night, which is
+    # exactly the case this fallback exists to survive.
+    try:
+        import pyttsx3
+    except ImportError as e:
+        raise RuntimeError(
+            "pyttsx3 is not installed, so the Windows TTS fallback cannot run. "
+            "Install it with: pip install pyttsx3"
+        ) from e
 
     wav_path = out_dir / "voiceover_pyttsx3.wav"
     mp3_path = out_dir / "voiceover_en.mp3"

@@ -1,5 +1,6 @@
 """Tests for verticals/tts.py — provider resolution, routing, fallbacks."""
 
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -28,15 +29,33 @@ class TestGetTtsProvider:
         with patch("verticals.config.load_config", return_value={"TTS_PROVIDER": "elevenlabs"}):
             assert tts.get_tts_provider(None) == "elevenlabs"
 
+    # Autodetect tries `import edge_tts` first, so these three have to force
+    # that import to fail. They used to rely on edge-tts simply being absent
+    # from the environment — true in CI, false on any dev box that installed
+    # requirements.txt, where all three failed. Setting the sys.modules entry
+    # to None makes the import raise ImportError deterministically.
+    @staticmethod
+    def _no_edge(monkeypatch):
+        monkeypatch.setitem(sys.modules, "edge_tts", None)
+
     def test_autodetect_elevenlabs_when_no_edge(self, monkeypatch):
-        # edge_tts is not installed in the test env, so the import fails and
-        # resolution continues to the ElevenLabs key check.
+        self._no_edge(monkeypatch)
         monkeypatch.delenv("TTS_PROVIDER", raising=False)
         with patch("verticals.config.load_config", return_value={}), \
              patch("verticals.tts.get_elevenlabs_key", return_value="k"):
             assert tts.get_tts_provider(None) == "elevenlabs"
 
+    def test_autodetect_edge_wins_when_importable(self, monkeypatch):
+        # The other side of the branch: with edge_tts present it takes priority
+        # over a configured ElevenLabs key.
+        monkeypatch.setitem(sys.modules, "edge_tts", MagicMock())
+        monkeypatch.delenv("TTS_PROVIDER", raising=False)
+        with patch("verticals.config.load_config", return_value={}), \
+             patch("verticals.tts.get_elevenlabs_key", return_value="k"):
+            assert tts.get_tts_provider(None) == "edge"
+
     def test_autodetect_say_last_resort(self, monkeypatch):
+        self._no_edge(monkeypatch)
         monkeypatch.delenv("TTS_PROVIDER", raising=False)
         with patch("verticals.config.load_config", return_value={}), \
              patch("verticals.tts.get_elevenlabs_key", return_value=""), \
@@ -44,6 +63,7 @@ class TestGetTtsProvider:
             assert tts.get_tts_provider(None) == "say"
 
     def test_raises_when_nothing_available(self, monkeypatch):
+        self._no_edge(monkeypatch)
         monkeypatch.delenv("TTS_PROVIDER", raising=False)
         with patch("verticals.config.load_config", return_value={}), \
              patch("verticals.tts.get_elevenlabs_key", return_value=""), \
@@ -72,7 +92,10 @@ class TestGenerateVoiceoverRouting:
         assert out == Path("/x/el.mp3")
         el.assert_called_once()
 
-    def test_edge_failure_falls_back_to_say_without_key(self, tmp_path):
+    def test_edge_failure_falls_back_to_say_without_key(self, tmp_path, monkeypatch):
+        # The last-resort branch is platform-dependent, so pin the platform
+        # instead of inheriting the host's. On Windows this routes to pyttsx3.
+        monkeypatch.setattr(sys, "platform", "darwin")
         with patch("verticals.tts.get_tts_provider", return_value="edge"), \
              patch("verticals.tts._generate_edge_tts", side_effect=RuntimeError("no net")), \
              patch("verticals.tts.get_elevenlabs_key", return_value=""), \
@@ -81,6 +104,16 @@ class TestGenerateVoiceoverRouting:
         assert out == Path("/x/say.mp3")
         say.assert_called_once()
 
+    def test_edge_failure_falls_back_to_pyttsx3_on_windows(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(sys, "platform", "win32")
+        with patch("verticals.tts.get_tts_provider", return_value="edge"), \
+             patch("verticals.tts._generate_edge_tts", side_effect=RuntimeError("no net")), \
+             patch("verticals.tts.get_elevenlabs_key", return_value=""), \
+             patch("verticals.tts._generate_pyttsx3", return_value=Path("/x/win.mp3")) as win:
+            out = tts.generate_voiceover("hi", tmp_path)
+        assert out == Path("/x/win.mp3")
+        win.assert_called_once()
+
     def test_elevenlabs_success(self, tmp_path):
         with patch("verticals.tts.get_tts_provider", return_value="elevenlabs"), \
              patch("verticals.tts._generate_elevenlabs", return_value=Path("/x/el.mp3")) as el:
@@ -88,7 +121,8 @@ class TestGenerateVoiceoverRouting:
         assert out == Path("/x/el.mp3")
         assert el.call_args.kwargs["voice_id"] == "v1"
 
-    def test_elevenlabs_failure_falls_back_to_say(self, tmp_path):
+    def test_elevenlabs_failure_falls_back_to_say(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(sys, "platform", "darwin")
         with patch("verticals.tts.get_tts_provider", return_value="elevenlabs"), \
              patch("verticals.tts._generate_elevenlabs", side_effect=RuntimeError("402")), \
              patch("verticals.tts._generate_say", return_value=Path("/x/say.mp3")) as say:
@@ -96,12 +130,28 @@ class TestGenerateVoiceoverRouting:
         assert out == Path("/x/say.mp3")
         say.assert_called_once()
 
-    def test_say_provider(self, tmp_path):
+    def test_say_provider(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(sys, "platform", "darwin")
         with patch("verticals.tts.get_tts_provider", return_value="say"), \
              patch("verticals.tts._generate_say", return_value=Path("/x/say.mp3")) as say:
             out = tts.generate_voiceover("hi", tmp_path)
         assert out == Path("/x/say.mp3")
         say.assert_called_once()
+
+    def test_say_provider_routes_to_pyttsx3_on_windows(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(sys, "platform", "win32")
+        with patch("verticals.tts.get_tts_provider", return_value="say"), \
+             patch("verticals.tts._generate_pyttsx3", return_value=Path("/x/win.mp3")) as win:
+            out = tts.generate_voiceover("hi", tmp_path)
+        assert out == Path("/x/win.mp3")
+        win.assert_called_once()
+
+    def test_pyttsx3_missing_module_gives_actionable_error(self, tmp_path, monkeypatch):
+        # Regression guard: this used to surface as a bare ModuleNotFoundError
+        # and kill the scheduled run instead of explaining the fix.
+        monkeypatch.setitem(sys.modules, "pyttsx3", None)
+        with pytest.raises(RuntimeError, match="pip install pyttsx3"):
+            tts._generate_pyttsx3("hi", tmp_path)
 
     def test_unknown_provider_raises(self, tmp_path):
         with patch("verticals.tts.get_tts_provider", return_value="bogus"):

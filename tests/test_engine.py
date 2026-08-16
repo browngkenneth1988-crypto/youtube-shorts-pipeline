@@ -52,9 +52,16 @@ class TestLoadSources:
         assert "reddit" not in {s.name for s in engine._sources}
 
     def test_niche_applies_reddit_subreddits(self):
+        # Assert the wiring, not the contents of niches/gaming.yaml. This used
+        # to hardcode ["gaming", "pcgaming"] and broke the moment the profile
+        # was tuned — a data edit should not fail a plumbing test.
+        from verticals.niche import get_discovery_config, load_niche
+
+        expected = get_discovery_config(load_niche("gaming"))["reddit"]["subreddits"]
         engine = make_engine(niche="gaming")
         reddit = next(s for s in engine._sources if s.name == "reddit")
-        assert reddit.subreddits == ["gaming", "pcgaming"]
+        assert reddit.subreddits == expected
+        assert "gaming" in reddit.subreddits  # profile actually populated
 
     def test_user_subreddits_override_niche_defaults(self):
         engine = make_engine(

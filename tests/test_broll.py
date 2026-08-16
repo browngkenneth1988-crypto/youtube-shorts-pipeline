@@ -7,7 +7,7 @@ import pytest
 from PIL import Image
 
 from verticals import broll
-from verticals.config import VIDEO_WIDTH, VIDEO_HEIGHT
+from verticals.config import VIDEO_HEIGHT, VIDEO_WIDTH
 
 
 def _png_bytes(size=(64, 64), color=(10, 20, 30)):

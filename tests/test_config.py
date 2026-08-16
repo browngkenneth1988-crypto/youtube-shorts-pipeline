@@ -4,7 +4,6 @@ import json
 import os
 import stat
 import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -316,8 +315,9 @@ class TestSaveConfig:
 
 class TestRunSetup:
     def test_saves_entered_keys_and_exits(self, tmp_path):
-        # Inputs: anthropic, elevenlabs (skipped), gemini, oauth prompt (no)
-        inputs = iter(["sk-ant", "", "gem-key", "n"])
+        # Inputs, in prompt order: anthropic, elevenlabs (skipped), gemini,
+        # leonardo (skipped), oauth prompt (no).
+        inputs = iter(["sk-ant", "", "gem-key", "", "n"])
         with patch("verticals.config.SKILL_DIR", tmp_path), \
              patch("builtins.input", lambda _: next(inputs)), \
              patch("builtins.print"), \
@@ -330,10 +330,22 @@ class TestRunSetup:
         assert saved["ANTHROPIC_API_KEY"] == "sk-ant"
         assert saved["GEMINI_API_KEY"] == "gem-key"
         assert "ELEVENLABS_API_KEY" not in saved  # blank input skipped
+        assert "LEONARDO_API_KEY" not in saved    # blank input skipped
         mock_sub.assert_not_called()  # oauth declined
 
+    def test_saves_leonardo_key_when_entered(self, tmp_path):
+        inputs = iter(["sk-ant", "", "gem-key", "leo-key", "n"])
+        with patch("verticals.config.SKILL_DIR", tmp_path), \
+             patch("builtins.input", lambda _: next(inputs)), \
+             patch("builtins.print"), \
+             patch("verticals.config.save_config") as mock_save, \
+             patch("verticals.config.subprocess.run"):
+            with pytest.raises(SystemExit):
+                config.run_setup()
+        assert mock_save.call_args.args[0]["LEONARDO_API_KEY"] == "leo-key"
+
     def test_runs_oauth_when_confirmed(self, tmp_path):
-        inputs = iter(["sk-ant", "el-key", "gem-key", "y"])
+        inputs = iter(["sk-ant", "el-key", "gem-key", "leo-key", "y"])
         with patch("verticals.config.SKILL_DIR", tmp_path), \
              patch("builtins.input", lambda _: next(inputs)), \
              patch("builtins.print"), \

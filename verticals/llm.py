@@ -74,6 +74,15 @@ def _ollama_available() -> bool:
 # which costs nothing but needs the daemon running.
 FALLBACK_ORDER = ["gemini", "claude", "openai", "ollama", "claude_cli"]
 
+# Every provider _dispatch knows how to route to.
+#
+# An unrecognised name is a configuration error — a typo in --provider or in
+# config.json — so it fails fast instead of entering the fallback chain. The
+# chain exists for providers that are real but unavailable; letting a bad name
+# through means a typo silently runs the job on a different vendor than asked
+# for, and (before this check) burned three retries plus 9s of backoff first.
+KNOWN_PROVIDERS = frozenset(FALLBACK_ORDER)
+
 
 def _provider_configured(name: str) -> bool:
     """True if this provider has what it needs to be worth attempting."""
@@ -101,6 +110,11 @@ def build_fallback_chain(provider: str | None = None) -> list[str]:
     to let the run finish on a different one.
     """
     first = get_provider(provider)
+    if first not in KNOWN_PROVIDERS:
+        raise ValueError(
+            f"Unknown LLM provider: {first}. "
+            f"Known providers: {', '.join(sorted(KNOWN_PROVIDERS))}"
+        )
     chain = [first]
     for name in FALLBACK_ORDER:
         if name not in chain and _provider_configured(name):

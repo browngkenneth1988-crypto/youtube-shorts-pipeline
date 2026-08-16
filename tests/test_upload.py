@@ -93,24 +93,31 @@ class TestUploadHappyPath:
         upload.upload_to_youtube(video_file, basic_draft, lang="es")
         _, kwargs = google_api.youtube.videos.return_value.insert.call_args
         body = kwargs["body"]
-        assert body["snippet"]["title"] == "A Great Title"
+        # The " #Shorts" suffix is deliberate (ed8bd32) — it is what tells
+        # YouTube to file the upload as a Short rather than a regular video.
+        assert body["snippet"]["title"] == "A Great Title #Shorts"
         assert body["snippet"]["description"] == "The description."
         assert body["snippet"]["tags"] == ["ai", "tech", "news"]
         assert body["snippet"]["defaultLanguage"] == "es"
         assert body["status"]["privacyStatus"] == "private"
         assert body["status"]["selfDeclaredMadeForKids"] is False
 
-    def test_title_truncated_to_100_chars(self, google_api, video_file):
+    def test_title_stays_within_youtube_limit(self, google_api, video_file):
+        # YouTube rejects titles over 100 chars. The body is cut at 90 so the
+        # 8-char " #Shorts" suffix always survives truncation — asserting the
+        # invariant rather than the exact 98, which is an implementation detail.
         draft = {"news": "n", "youtube_title": "T" * 250}
         upload.upload_to_youtube(video_file, draft)
         _, kwargs = google_api.youtube.videos.return_value.insert.call_args
-        assert len(kwargs["body"]["snippet"]["title"]) == 100
+        title = kwargs["body"]["snippet"]["title"]
+        assert len(title) <= 100
+        assert title.endswith(" #Shorts")
 
     def test_title_falls_back_to_news(self, google_api, video_file):
         draft = {"news": "Fallback headline"}
         upload.upload_to_youtube(video_file, draft)
         _, kwargs = google_api.youtube.videos.return_value.insert.call_args
-        assert kwargs["body"]["snippet"]["title"] == "Fallback headline"
+        assert kwargs["body"]["snippet"]["title"] == "Fallback headline #Shorts"
 
     def test_progress_status_is_handled(self, google_api, video_file, basic_draft):
         # First next_chunk reports progress, second returns the response.

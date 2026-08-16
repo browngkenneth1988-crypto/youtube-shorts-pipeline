@@ -126,12 +126,24 @@ class TestCallLlmRouting:
             mock_cli.assert_called_once_with("hi", max_tokens=200)
 
     def test_unknown_provider_raises(self):
-        # with_retry wraps the call; the ValueError surfaces after retries.
-        # Patch sleep so the backoff delays don't slow the test.
-        with patch("verticals.llm.get_provider", return_value="bogus"), \
-             patch("verticals.retry.time.sleep"):
+        # Rejected while the chain is built, before any provider is contacted.
+        # This must stay a hard raise rather than a fall-through: a typo in
+        # --provider should not quietly run the job on a different vendor.
+        with patch("verticals.llm.get_provider", return_value="bogus"):
             with pytest.raises(ValueError, match="Unknown LLM provider"):
                 llm.call_llm("hi")
+
+    def test_unknown_provider_contacts_nobody(self):
+        # Regression guard. This previously fell through to the next configured
+        # provider and made a real Gemini request — a live API call from the
+        # test suite, which is supposed to be fully mocked.
+        with patch("verticals.llm.get_provider", return_value="bogus"), \
+             patch("verticals.llm._dispatch") as dispatch, \
+             patch("verticals.llm.time.sleep") as slept:
+            with pytest.raises(ValueError):
+                llm.call_llm("hi")
+            dispatch.assert_not_called()
+            slept.assert_not_called()
 
 
 class TestOllamaAvailable:
@@ -155,11 +167,39 @@ class TestCallClaude:
 
     def test_api_backend_calls_client(self):
         client = MagicMock()
-        client.messages.create.return_value = MagicMock(content=[MagicMock(text="  api-answer  ")])
+        # type="text" matters: _call_claude filters content blocks by type so a
+        # leading thinking block doesn't get concatenated into the answer.
+        client.messages.create.return_value = MagicMock(
+            stop_reason="end_turn",
+            content=[MagicMock(text="  api-answer  ", type="text")],
+        )
         with patch("verticals.llm.get_claude_backend", return_value="api"), \
              patch("verticals.llm.get_anthropic_client", return_value=client):
             assert llm._call_claude("hi", 100) == "api-answer"
-        assert client.messages.create.call_args.kwargs["max_tokens"] == 100
+        # Floored to 4096: max_tokens caps thinking plus answer together, so a
+        # caller's 100 would leave nothing for the reply.
+        assert client.messages.create.call_args.kwargs["max_tokens"] == 4096
+
+    def test_api_backend_skips_thinking_blocks(self):
+        client = MagicMock()
+        client.messages.create.return_value = MagicMock(
+            stop_reason="end_turn",
+            content=[
+                MagicMock(text="internal reasoning", type="thinking"),
+                MagicMock(text="the answer", type="text"),
+            ],
+        )
+        with patch("verticals.llm.get_claude_backend", return_value="api"), \
+             patch("verticals.llm.get_anthropic_client", return_value=client):
+            assert llm._call_claude("hi", 8000) == "the answer"
+
+    def test_api_backend_raises_on_refusal(self):
+        client = MagicMock()
+        client.messages.create.return_value = MagicMock(stop_reason="refusal", content=[])
+        with patch("verticals.llm.get_claude_backend", return_value="api"), \
+             patch("verticals.llm.get_anthropic_client", return_value=client):
+            with pytest.raises(RuntimeError, match="declined"):
+                llm._call_claude("hi", 100)
 
 
 class TestCallGemini:
