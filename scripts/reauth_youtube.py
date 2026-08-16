@@ -21,11 +21,29 @@ SCOPES = [
 SKILL_DIR = Path.home() / ".verticals"
 DEFAULT_SECRET = SKILL_DIR / "client_secret.json"
 
-# niche -> (token filename, expected channel handle)
+# niche -> token filename. The channel this must land on is NOT hardcoded here:
+# it is read from niches/<niche>.yaml, so the profile stays the single source of
+# truth and this file cannot drift out of step with it.
 CHANNELS = {
-    "pets":              ("youtube_token.json",                   "@LifeWithOttoTV"),
-    "curious_classroom": ("youtube_token_curious_classroom.json", "@CuriousClassroomTV"),
+    "pets":              "youtube_token.json",
+    "curious_classroom": "youtube_token_curious_classroom.json",
 }
+
+
+def expected_channel(niche: str):
+    """(channel_id, handle) the niche profile says this token must authorise.
+
+    Returns (None, None) when the profile has no channel block, in which case
+    the check is skipped rather than guessed at.
+    """
+    try:
+        import yaml
+        root = Path(__file__).resolve().parent.parent
+        prof = yaml.safe_load((root / "niches" / f"{niche}.yaml").read_text(encoding="utf-8"))
+        ch = (prof or {}).get("channel", {}) or {}
+        return ch.get("channel_id"), ch.get("handle")
+    except Exception:
+        return None, None
 
 
 def main():
@@ -40,9 +58,10 @@ def main():
     args = [a for a in sys.argv[1:] if a]
     niche = args[0] if args and args[0] in CHANNELS else "pets"
     rest = [a for a in args if a != niche]
-    token_name, expected_handle = CHANNELS[niche]
+    token_name = CHANNELS[niche]
     token_path = SKILL_DIR / token_name
-    print(f"Channel: {niche}  ->  {expected_handle}")
+    want_id, expected_handle = expected_channel(niche)
+    print(f"Channel: {niche}  ->  {expected_handle or '(not pinned in profile)'}")
     secret = Path(rest[0]).expanduser() if rest else DEFAULT_SECRET
     if not secret.exists():
         print(f"client_secret.json not found at: {secret}")
@@ -95,12 +114,23 @@ def main():
         print(f"  Channel ID         : {ch['id']}")
         print(f"  Subscribers        : {subs}")
         print("=" * 52)
-        if expected_handle.lower().lstrip("@") not in str(handle).lower().lstrip("@"):
-            print(f"\n  WRONG CHANNEL. Expected {expected_handle}.")
-            print("  Re-run and pick the right account, or switch channel at")
-            print("  https://www.youtube.com/account before re-running.")
+        # Compare channel IDs, not handles. A substring handle match cannot
+        # tell @curiousclassroomtv from @curiousclassroomtv-z6b — two real
+        # channels on this account, one verified and one not — so the old
+        # check passed for either and could bless a token that uploads to the
+        # empty channel.
+        if want_id and ch["id"] != want_id:
+            print(f"\n  WRONG CHANNEL. Expected {expected_handle} ({want_id}).")
+            print(f"  You authorised {handle} ({ch['id']}).")
+            print("  Re-run and pick the right channel in Google's chooser, or")
+            print("  switch at https://www.youtube.com/account first.")
+            print(f"  The bad token is already written to {token_path};")
+            print("  re-run before uploading.")
             sys.exit(3)
-        print("\n  Correct channel. Uploads are live again.")
+        if want_id:
+            print("\n  Correct channel. Uploads are live again.")
+        else:
+            print(f"\n  Profile pins no channel_id — authorised {handle} unchecked.")
     except SystemExit:
         raise
     except Exception as e:
