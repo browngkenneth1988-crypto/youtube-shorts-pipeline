@@ -1,0 +1,31 @@
+# gitleaks config — see .pre-commit-config.yaml (pinned v8.30.0) and
+# .github/workflows/ci.yml, which scans with fetch-depth: 0 (full history).
+#
+# Why an allowlist exists at all:
+#
+# Commits cb2723a and 42e0ee1 on branch claude/automate-youtube-shorts-ujgkW
+# contain three plaintext API keys in scripts/daily_run.bat. All three are dead
+# (Gemini and Leonardo revoked; ElevenLabs revoked 2026-08-16 — verified by API
+# probe, see SECRET-EXPOSURE-2026-08-16.md).
+#
+# The commits are NOT rewritten out of history on purpose. This repo is a fork
+# of rushindrasinha/youtube-shorts-pipeline (515 forks) and GitHub shares object
+# storage across a fork network: the blob stays anonymously fetchable by SHA
+# through the parent repo even after a force-push here. Rewriting would cost a
+# force-push over 29 commits of real work and remove nothing. Revocation was the
+# fix; only GitHub Support can purge the network cache.
+#
+# So CI would fail forever on already-dead keys. These two SHAs are allowlisted
+# by exact commit — NOT by path or regex — so any NEW secret in
+# scripts/daily_run.bat, or anywhere else, still fails the scan.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Revoked keys in scripts/daily_run.bat; history intentionally not rewritten (fork network)"
+targetRules = []
+commits = [
+  "cb2723ae9e7587e5a4b9c94230cb595a365426f5",
+  "42e0ee1b1a08236b08156a8555cc1af379926602",
+]
