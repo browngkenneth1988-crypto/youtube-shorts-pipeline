@@ -11,7 +11,13 @@ import random
 from .config import PLATFORM_CONFIGS
 from .llm import call_llm
 from .log import log
-from .niche import get_script_context, get_visual_context, get_visual_prompt_suffix, load_niche
+from .niche import (
+    forbids_rendered_text,
+    get_script_context,
+    get_visual_context,
+    get_visual_prompt_suffix,
+    load_niche,
+)
 from .research import research_topic
 
 
@@ -92,6 +98,25 @@ def generate_draft(
         # suffix is appended programmatically after parsing, and asking for it
         # here too got it into every prompt twice. Style/mood/subjects above
         # already steer subject choice, which is what the model is for.
+
+        # The avoid list alone was not enough. A real run drafted "a clean
+        # diagram illustrating 'event boundaries' as lines between coloured
+        # thought bubbles" — a subject that cannot exist without words in it —
+        # and the image model duly rendered a dozen misspelled labels. The
+        # avoid list tells the image model what not to draw; this tells the
+        # writer not to ask for it in the first place.
+        if forbids_rendered_text(profile):
+            vis_parts.append(
+                "HARD RULE — no words in the image. Every b-roll prompt must "
+                "describe something photographable with no readable text in "
+                "frame. Never request a labelled diagram, chart, graph, map "
+                "with place names, sign, book cover, screen or UI, newspaper, "
+                "or any subject whose meaning depends on words. Image models "
+                "render lettering as garbled nonsense. To convey a concept, "
+                "describe a physical scene that embodies it instead: for "
+                "'memory is organised by room', a doorway between two lit "
+                "rooms, not a labelled flowchart."
+            )
         if vis_parts:
             visual_guidance = "\nB-ROLL VISUAL GUIDANCE:\n" + "\n".join(vis_parts)
 

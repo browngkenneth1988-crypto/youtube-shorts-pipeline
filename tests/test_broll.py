@@ -289,3 +289,17 @@ class TestGenerateBrollLeonardoPath:
         # Graceful degradation: the pipeline still gets a usable frame.
         assert frames[0].exists()
         assert Image.open(frames[0]).size == (VIDEO_WIDTH, VIDEO_HEIGHT)
+
+    def test_negative_prompt_from_profile_reaches_leonardo(self, tmp_path):
+        profile = dict(self.LEO_PROFILE)
+        profile["visuals"] = dict(profile["visuals"],
+                                  subjects={"avoid": ["text or lettering", "cartoon style"]})
+        with patch("verticals.broll.load_niche", return_value=profile), \
+             patch("verticals.broll._get_reference_images", return_value=[]), \
+             patch("verticals.leonardo.get_leonardo_key", return_value="lk"), \
+             patch("verticals.leonardo.generate_image_leonardo") as gen, \
+             patch("verticals.broll._resize_to_portrait"):
+            broll.generate_broll(["p1"], tmp_path, niche="pets")
+        neg = gen.call_args.kwargs["negative_prompt"]
+        assert "cartoon style" in neg
+        assert "gibberish text" in neg  # text vocabulary added by the profile's avoid list

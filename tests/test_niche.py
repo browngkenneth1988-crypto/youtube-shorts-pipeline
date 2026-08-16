@@ -217,3 +217,57 @@ class TestListNiches:
         names = niche.list_niches()
         assert "general" in names
         assert "custom" in names
+
+
+def _with_avoid(*avoid):
+    return {"visuals": {"subjects": {"avoid": list(avoid)}}}
+
+
+class TestForbidsRenderedText:
+    def test_true_when_avoid_mentions_text(self):
+        assert niche.forbids_rendered_text(
+            _with_avoid("text or lettering rendered inside the image")
+        ) is True
+
+    def test_true_for_other_wordings(self):
+        for phrase in ("no typography", "visible watermark", "brand logo", "burned-in caption"):
+            assert niche.forbids_rendered_text(_with_avoid(phrase)) is True, phrase
+
+    def test_false_when_avoid_is_unrelated(self):
+        assert niche.forbids_rendered_text(_with_avoid("cartoon style")) is False
+
+    def test_false_when_no_visuals_block(self):
+        assert niche.forbids_rendered_text({}) is False
+
+
+class TestVisualNegativePrompt:
+    def test_built_from_avoid_list(self):
+        neg = niche.get_visual_negative_prompt(_with_avoid("cartoon style", "neon"))
+        assert "cartoon style" in neg
+        assert "neon" in neg
+
+    def test_text_vocabulary_added_when_text_forbidden(self):
+        neg = niche.get_visual_negative_prompt(_with_avoid("text or lettering"))
+        # Spelled out in terms image models respond to, not just the profile's
+        # own phrasing.
+        for term in ("words", "letters", "typography", "signage", "gibberish text"):
+            assert term in neg
+
+    def test_text_vocabulary_omitted_when_not_forbidden(self):
+        neg = niche.get_visual_negative_prompt(_with_avoid("cartoon style"))
+        assert "gibberish text" not in neg
+
+    def test_explicit_override_wins(self):
+        profile = {"visuals": {
+            "subjects": {"avoid": ["cartoon style"]},
+            "negative_prompt": "only this",
+        }}
+        assert niche.get_visual_negative_prompt(profile) == "only this"
+
+    def test_empty_profile_yields_empty_string(self):
+        assert niche.get_visual_negative_prompt({}) == ""
+
+    def test_real_curious_classroom_profile_forbids_text(self):
+        profile = niche.load_niche("curious_classroom")
+        assert niche.forbids_rendered_text(profile) is True
+        assert "gibberish text" in niche.get_visual_negative_prompt(profile)

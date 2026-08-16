@@ -216,6 +216,15 @@ class TestNicheDrivenPrompt:
         p = self._prompt_for({}, channel_context="esports news")
         assert "esports news" in p
 
+    def test_no_text_rule_present_when_niche_forbids_lettering(self):
+        p = self._prompt_for({"visuals": {"subjects": {"avoid": ["text or lettering"]}}})
+        assert "HARD RULE" in p
+        assert "labelled diagram" in p
+
+    def test_no_text_rule_absent_when_niche_permits_lettering(self):
+        p = self._prompt_for({"visuals": {"subjects": {"avoid": ["cartoon style"]}}})
+        assert "HARD RULE" not in p
+
     def test_model_is_not_asked_to_append_the_suffix(self):
         # Asking for it here AND appending after parsing put the suffix into
         # every b-roll prompt twice; the append is the reliable half.

@@ -184,3 +184,22 @@ class TestGenerateImageLeonardo:
             )
         up.assert_not_called()
         assert "init_image_id" not in post.call_args.kwargs["json"]
+
+    def test_negative_prompt_sent_when_supplied(self, tmp_path):
+        with patch("verticals.leonardo.requests.post", return_value=_resp(self.START)) as post, \
+             patch("verticals.leonardo.requests.get") as get:
+            get.side_effect = [_resp(self._poll("COMPLETE", [{"url": "u"}])), _resp(content=b"x")]
+            leonardo.generate_image_leonardo(
+                "a doorway", tmp_path / "o.png", "k",
+                negative_prompt="text, words, gibberish text",
+            )
+        # The API's own exclusion field — "no text" in the positive prompt does
+        # not suppress lettering, which is what produced garbled labels.
+        assert post.call_args.kwargs["json"]["negative_prompt"] == "text, words, gibberish text"
+
+    def test_negative_prompt_omitted_when_empty(self, tmp_path):
+        with patch("verticals.leonardo.requests.post", return_value=_resp(self.START)) as post, \
+             patch("verticals.leonardo.requests.get") as get:
+            get.side_effect = [_resp(self._poll("COMPLETE", [{"url": "u"}])), _resp(content=b"x")]
+            leonardo.generate_image_leonardo("a doorway", tmp_path / "o.png", "k")
+        assert "negative_prompt" not in post.call_args.kwargs["json"]

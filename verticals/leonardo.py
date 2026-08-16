@@ -72,11 +72,17 @@ def generate_image_leonardo(
     init_strength: float = 0.35,
     width: int = 576,
     height: int = 1024,
+    negative_prompt: str = "",
 ) -> None:
     """Generate an image via Leonardo.ai API.
 
     If reference_image_path is provided, uses image-to-image mode
     to maintain visual consistency with the reference (Otto).
+
+    negative_prompt is the API's own exclusion field. Putting "no text, no
+    lettering" in the positive prompt does not work — image models do not
+    reliably parse negation, and a real run rendered a diagram covered in
+    misspelled pseudo-words with exactly that wording in the prompt.
     """
     headers = _headers(api_key)
 
@@ -89,6 +95,8 @@ def generate_image_leonardo(
         "num_images": 1,
         "alchemy": True,
     }
+    if negative_prompt:
+        body["negative_prompt"] = negative_prompt
 
     # Upload reference image for img2img if provided
     if reference_image_path and reference_image_path.exists():

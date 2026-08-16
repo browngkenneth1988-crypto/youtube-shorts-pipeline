@@ -146,6 +146,44 @@ def get_visual_prompt_suffix(profile: dict) -> str:
     return visuals.get("prompt_suffix", "photorealistic, cinematic lighting, high quality")
 
 
+# Wording that means "the image must not contain rendered words". Matched
+# against the profile's own avoid list so this stays niche-driven: a niche that
+# genuinely wants lettering just doesn't list it.
+_TEXT_AVOID_MARKERS = ("text", "letter", "typography", "caption", "watermark", "logo")
+
+
+def forbids_rendered_text(profile: dict) -> bool:
+    """True if this niche's avoid list rules out words inside the image."""
+    avoid = get_visual_context(profile).get("subjects", {}).get("avoid", []) or []
+    joined = " ".join(str(a) for a in avoid).lower()
+    return any(m in joined for m in _TEXT_AVOID_MARKERS)
+
+
+def get_visual_negative_prompt(profile: dict) -> str:
+    """Negative prompt for image providers that accept one.
+
+    Built from the profile's own avoid list rather than a hardcoded string, so
+    it tracks the niche. A profile can override it outright with
+    `visuals.negative_prompt`.
+
+    This exists because putting "no text, no lettering" in the *positive*
+    prompt suffix does not work: image models do not reliably parse negation,
+    and a real run produced a diagram covered in garbled pseudo-words while
+    that exact wording was in the prompt.
+    """
+    visuals = get_visual_context(profile)
+    override = visuals.get("negative_prompt")
+    if override:
+        return str(override)
+
+    parts = [str(a) for a in (visuals.get("subjects", {}).get("avoid") or [])]
+    if forbids_rendered_text(profile):
+        # Spelled out in the vocabulary image models actually respond to.
+        parts += ["text", "words", "letters", "typography", "captions",
+                  "labels", "signage", "watermark", "gibberish text"]
+    return ", ".join(parts)
+
+
 def get_visual_subjects(profile: dict) -> dict:
     """Get preferred and avoided visual subjects."""
     visuals = profile.get("visuals", {})

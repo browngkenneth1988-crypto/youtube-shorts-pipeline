@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .config import VIDEO_HEIGHT, VIDEO_WIDTH, get_gemini_key, run_cmd
 from .log import log
-from .niche import NICHES_DIR, load_niche
+from .niche import NICHES_DIR, get_visual_negative_prompt, load_niche
 from .retry import with_retry
 
 
@@ -175,6 +175,9 @@ def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list
     leo_config = profile.get("visuals", {}).get("leonardo", {})
     use_leonardo = leo_config.get("provider") == "leonardo"
     ref_images = _get_reference_images(niche) if use_leonardo else []
+    # Built from the profile's avoid list. Only Leonardo consumes it — Gemini's
+    # REST image call has no negative-prompt field.
+    negative_prompt = get_visual_negative_prompt(profile)
 
     frames = []
 
@@ -202,6 +205,7 @@ def generate_broll(prompts: list, out_dir: Path, niche: str = "general") -> list
                         init_strength=leo_config.get("init_strength", 0.35),
                         width=576,
                         height=1024,
+                        negative_prompt=negative_prompt,
                     )
                     _resize_to_portrait(out_path)
                     frames.append(out_path)
