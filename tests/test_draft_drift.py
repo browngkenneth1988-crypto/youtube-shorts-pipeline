@@ -105,3 +105,55 @@ class TestGenerateDraftRaisesOnDrift:
             from verticals.draft import generate_draft
             d = generate_draft("Parasitic zombie-ant fungus thrives in mosses, too")
         assert d["news"] == "Parasitic zombie-ant fungus thrives in mosses, too"
+
+
+class TestRetryAppliesToEveryPipeline:
+    """The retry lives in generate_draft, not in one caller.
+
+    curious_daily, daily_shorts (the pets pipeline) and the draft/run CLI all
+    reach the same generator, and only the queue builder ever had handling. The
+    pets pipeline builds and uploads, so an off-topic draft there becomes a
+    published video whose script does not match what is on screen.
+    """
+
+    ON = {"script": "Otto the Shih-Poo naps with Kobi his orange dragon.",
+          "broll_prompts": ["a", "b", "c"], "youtube_title": "Otto and Kobi Nap Together",
+          "youtube_description": "d", "youtube_tags": "t",
+          "instagram_caption": "c", "tiktok_caption": "c", "thumbnail_prompt": "p"}
+    OFF = {**ON, "script": "You see a face in a cloud. This is called pareidolia.",
+           "youtube_title": "Why Do You See Faces in Clouds?"}
+    TOPIC = "Otto naps with Kobi his orange plush dragon"
+
+    def _json(self, d):
+        import json
+        return json.dumps(d)
+
+    def test_recovers_when_the_retry_lands(self):
+        from verticals.draft import generate_draft
+        seq = [self._json(self.OFF), self._json(self.ON)]
+        with patch("verticals.draft.call_llm", side_effect=seq), \
+             patch("verticals.draft.research_topic", return_value="ctx"):
+            d = generate_draft(self.TOPIC, niche="pets")
+        assert d["youtube_title"] == "Otto and Kobi Nap Together"
+
+    def test_raises_when_every_attempt_drifts(self):
+        from verticals.draft import generate_draft
+        with patch("verticals.draft.call_llm", return_value=self._json(self.OFF)), \
+             patch("verticals.draft.research_topic", return_value="ctx"):
+            with pytest.raises(DraftDriftError):
+                generate_draft(self.TOPIC, niche="pets")
+
+    def test_retry_count_is_configurable_and_respected(self):
+        from verticals.draft import generate_draft
+        with patch("verticals.draft.call_llm", return_value=self._json(self.OFF)) as llm, \
+             patch("verticals.draft.research_topic", return_value="ctx"):
+            with pytest.raises(DraftDriftError):
+                generate_draft(self.TOPIC, niche="pets", drift_retries=2)
+        assert llm.call_count == 3  # initial + 2 retries
+
+    def test_no_retry_when_the_first_draft_is_on_topic(self):
+        from verticals.draft import generate_draft
+        with patch("verticals.draft.call_llm", return_value=self._json(self.ON)) as llm, \
+             patch("verticals.draft.research_topic", return_value="ctx"):
+            generate_draft(self.TOPIC, niche="pets")
+        assert llm.call_count == 1

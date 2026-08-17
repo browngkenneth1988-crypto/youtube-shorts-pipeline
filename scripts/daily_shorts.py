@@ -33,6 +33,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from verticals import notify
 from verticals.config import DRAFTS_DIR, LOGS_DIR, MEDIA_DIR
 from verticals.log import log, set_verbose
 from verticals.niche import load_niche
@@ -330,7 +331,14 @@ def main():
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(error_log, "a") as f:
             f.write(f"[{timestamp}] {e}\n")
+        # Same alerting as curious_daily. This pipeline builds and uploads, so a
+        # failure here matters more than one in the queue builder, and until now
+        # it only ever reached errors.log — a file nobody opens.
+        notify.alert(f"daily_shorts[{args.niche}]", f"{type(e).__name__}: {str(e)[:180]}")
         sys.exit(1)
+
+    notify.record_status(f"daily_shorts[{args.niche}]", ok=True,
+                         detail="pipeline completed")
 
 
 if __name__ == "__main__":

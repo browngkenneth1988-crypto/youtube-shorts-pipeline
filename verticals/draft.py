@@ -114,6 +114,37 @@ def generate_draft(
     niche: str = "general",
     platform: str = "shorts",
     provider: str | None = None,
+    drift_retries: int = 1,
+) -> dict:
+    """Research topic + generate niche-aware draft, rejecting off-topic results.
+
+    Drift is an intermittent model error rather than a property of the topic, so
+    one retry usually lands. The retry lives here instead of in each caller:
+    curious_daily, daily_shorts (the pets pipeline) and the `draft`/`run` CLI all
+    reach the same generator, and only one of them had any handling — which meant
+    a pets Short could be built, voiced, captioned and uploaded from a script
+    about something the video does not show.
+
+    Raises:
+        DraftDriftError: only when every attempt came back off-topic.
+    """
+    last = None
+    for attempt in range(drift_retries + 1):
+        try:
+            return _generate_draft_once(news, channel_context, niche, platform, provider)
+        except DraftDriftError as e:
+            last = e
+            if attempt < drift_retries:
+                log(f"Draft came back off-topic, retrying ({attempt + 1}/{drift_retries}): {e}")
+    raise last
+
+
+def _generate_draft_once(
+    news: str,
+    channel_context: str = "",
+    niche: str = "general",
+    platform: str = "shorts",
+    provider: str | None = None,
 ) -> dict:
     """Research topic + generate niche-aware draft via LLM.
 
