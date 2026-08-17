@@ -21,35 +21,60 @@ from .niche import (
 )
 from .research import research_topic
 
+# Raw control characters that are legal in text but not inside a JSON string.
+_RAW_CONTROL = {
+    chr(10): "\\n",
+    chr(13): "\\r",
+    chr(9): "\\t",
+}
 
-def _fallback_draft(news: str) -> dict:
-    """Safe fallback draft when JSON parsing completely fails."""
-    return {
-        "script": (
-            "Shh... Otto has a bedtime secret to share with you tonight. "
-            "Otto never goes anywhere without Kobi. Not to his cozy bed. "
-            "Not to his favorite window. Wherever Otto goes, Kobi goes too. "
-            "Because that is what love looks like. Love holds on gently. "
-            "You are enough. You are loved. You are magic. Now sleep. "
-            "Sweet dreams, little one."
-        ),
-        "broll_prompts": [
-            "Small curly black Shih-Poo dog sleeping peacefully on soft bed with orange plush dragon toy, warm nightlight glow, dreamy atmosphere",
-            "Close-up of adorable black Shih-Poo with brown eyes cuddling orange stuffed dragon, soft pastel lighting, cozy bedroom",
-            "Dreamy scene of small black dog and plush dragon under blanket, stars visible through window, gentle warm lighting",
-        ],
-        "youtube_title": f"Otto and Kobi — {news[:50]}",
-        "youtube_description": (
-            f"{news}\n\n"
-            "Otto is the real dog behind the Otto's Everyday Adventures children's book series.\n\n"
-            "Subscribe for more of Otto's real life.\n\n"
-            "#shorts #funnydog #dogshorts #shipoo #lifewithotto"
-        ),
-        "youtube_tags": "funny dog,dog shorts,shipoo,shih poo,Otto,LifeWithOtto,BrownStoryWorld,Otto the Shih-Poo,dog sleep,calm dog",
-        "instagram_caption": "",
-        "tiktok_caption": "",
-        "thumbnail_prompt": "cute black Shih-Poo dog sleeping with orange plush dragon, dreamy pastel background",
-    }
+
+class DraftParseError(RuntimeError):
+    """The model's response could not be parsed into a draft."""
+
+
+def _escape_newlines_in_strings(raw: str) -> str:
+    """Escape raw newlines that sit inside JSON string literals, only.
+
+    Models routinely emit real line breaks inside a string value, which is
+    invalid JSON. The previous cleanup replaced every newline in the payload,
+    including the structural ones between fields — so a response that opened
+    with `{` then a newline became `{\n"script"`, an escape sequence outside a
+    string, which cannot parse. A well-formed response with pretty-printed
+    formatting was turned into a broken one by the repair.
+    """
+    out = []
+    in_string = False
+    escaped = False
+    for ch in raw:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            if ch in _RAW_CONTROL:
+                out.append(_RAW_CONTROL[ch])
+                continue
+        elif ch == '"':
+            in_string = True
+        out.append(ch)
+    return "".join(out)
+
+
+# _fallback_draft was removed on 2026-08-16. On a JSON parse failure it returned
+# a hardcoded Otto-and-Kobi bedtime script — pets content, served to every niche.
+# A Curious Classroom fossil topic was banked with Shih-Poo b-roll prompts and
+# #lifewithotto tags, and the queue marked that topic done.
+#
+# It also defeated the drift check: its title was f"Otto and Kobi — {news[:50]}",
+# so the topic's own words were echoed back and the draft always looked on-topic.
+#
+# A fallback b-roll frame still yields a usable video; a fallback script yields
+# the wrong video. Parse failure now raises DraftParseError, which callers
+# already handle — the queue builder leaves the topic queued and alerts, and the
+# pets pipeline exits non-zero before building anything.
 
 
 # Function words that prove nothing about subject matter. Short ones are listed
@@ -324,8 +349,11 @@ Output ONLY a valid JSON object, nothing else. Start with {{ and end with }}:
     try:
         draft = json.loads(raw)
     except json.JSONDecodeError:
-        # Fix unescaped newlines and carriage returns
-        cleaned = raw.replace('\r\n', '\\n').replace('\r', '\\n').replace('\n', '\\n')
+        # Escape raw control characters inside string values only. Escaping all
+        # of them corrupted the structure: a pretty-printed response opening
+        # with `{` then a newline became `{\n"script"`, which cannot parse, so a
+        # recoverable response was destroyed by its own repair.
+        cleaned = _escape_newlines_in_strings(raw)
         try:
             draft = json.loads(cleaned)
         except json.JSONDecodeError:
@@ -346,19 +374,19 @@ Output ONLY a valid JSON object, nothing else. Start with {{ and end with }}:
                         break
 
             if json_start >= 0 and json_end > json_start:
-                json_str = raw[json_start:json_end]
-                # Replace actual newlines inside JSON strings
-                json_str = json_str.replace('\r\n', '\\n').replace('\r', '\\n').replace('\n', '\\n')
+                json_str = _escape_newlines_in_strings(raw[json_start:json_end])
                 try:
                     draft = json.loads(json_str)
                 except json.JSONDecodeError as e:
                     log(f"JSON parse failed after cleanup: {e}")
                     log(f"Cleaned JSON (first 300): {json_str[:300]}")
-                    # Last resort: generate a safe default
-                    draft = _fallback_draft(news)
+                    raise DraftParseError(
+                        f"Could not parse a draft from the model response: {e}"
+                    ) from e
             else:
-                log("Could not find JSON object in response")
-                draft = _fallback_draft(news)
+                raise DraftParseError(
+                    "No JSON object found in the model response"
+                ) from None
 
     # Validate and sanitize LLM output fields
     expected_str_fields = [

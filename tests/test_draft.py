@@ -3,7 +3,9 @@
 import json
 from unittest.mock import patch
 
-from verticals.draft import generate_draft
+import pytest
+
+from verticals.draft import DraftParseError, generate_draft
 
 
 class TestGenerateDraft:
@@ -97,8 +99,11 @@ VALID = {
 
 
 class TestMalformedJsonRecovery:
-    """The LLM's JSON is treated as untrusted; every degradation path is a
-    documented behaviour, not an accident. Nothing here should raise."""
+    """The LLM's JSON is treated as untrusted.
+
+    Repairable malformations are repaired. Unrepairable ones raise
+    DraftParseError rather than substituting invented content — a fallback
+    script is the wrong video, not a degraded one."""
 
     @patch("verticals.draft.research_topic", return_value="research")
     @patch("verticals.draft.call_llm")
@@ -140,19 +145,35 @@ class TestMalformedJsonRecovery:
 
     @patch("verticals.draft.research_topic", return_value="research")
     @patch("verticals.draft.call_llm")
-    def test_no_json_at_all_falls_back(self, llm, _research):
+    def test_no_json_at_all_raises(self, llm, _research):
+        # Used to return a hardcoded Otto-and-Kobi bedtime script for every
+        # niche, which the caller then banked as a real draft.
         llm.return_value = "I am unable to help with that request."
-        draft = generate_draft("A headline")
-        assert draft["script"]
-        assert len(draft["broll_prompts"]) == 3
+        with pytest.raises(DraftParseError):
+            generate_draft("A headline")
 
     @patch("verticals.draft.research_topic", return_value="research")
     @patch("verticals.draft.call_llm")
-    def test_irreparable_json_falls_back(self, llm, _research):
+    def test_irreparable_json_raises(self, llm, _research):
         llm.return_value = '{"script": "unterminated, "broll_prompts": [}'
-        draft = generate_draft("A headline")
-        assert draft["script"]
-        assert isinstance(draft["broll_prompts"], list)
+        with pytest.raises(DraftParseError):
+            generate_draft("A headline")
+
+    @patch("verticals.draft.research_topic", return_value="research")
+    @patch("verticals.draft.call_llm")
+    def test_pretty_printed_json_with_real_newlines_parses(self, llm, _research):
+        """The exact shape that failed in production on 2026-08-16.
+
+        A newline after the opening brace plus real newlines inside the script
+        value. The old blanket newline escaping turned `{<nl>"script"` into
+        `{\n"script"` and destroyed a recoverable response.
+        """
+        llm.return_value = (
+            '{' + chr(10) + '"script": "For decades." + chr(10) + chr(10) + "But fossils.",'
+            + chr(10) + '"youtube_title": "T"' + chr(10) + '}'
+        ).replace('" + chr(10) + chr(10) + "', chr(10) + chr(10))
+        d = generate_draft("fossils rewrite the dawn of animal life")
+        assert "fossils" in d["script"].lower()
 
 
 class TestNicheDrivenPrompt:
