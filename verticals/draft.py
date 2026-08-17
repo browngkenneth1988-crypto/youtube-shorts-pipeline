@@ -7,6 +7,7 @@ visual vocabulary for b-roll prompts, and thumbnail guidance.
 
 import json
 import random
+import re
 
 from .config import PLATFORM_CONFIGS
 from .llm import call_llm
@@ -49,6 +50,62 @@ def _fallback_draft(news: str) -> dict:
         "tiktok_caption": "",
         "thumbnail_prompt": "cute black Shih-Poo dog sleeping with orange plush dragon, dreamy pastel background",
     }
+
+
+# Function words that prove nothing about subject matter. Short ones are listed
+# explicitly because the tokeniser deliberately keeps 2-character tokens — "AI"
+# is exactly the kind of word that identifies a topic.
+_DRIFT_STOPWORDS = frozenset("""
+a an and are as at be been being but by can could did do does doing for from
+had has have he her here him his how i if in into is it its me my no not of on
+one or our out over own she should so some such than that the their them then
+there these they this those through to too under until up us very was we were
+what when where which while who why will with would you your
+""".split())
+
+# Below this many distinctive words, a topic cannot be checked reliably —
+# "Test" shares nothing with anything — so the check stands down rather than
+# rejecting drafts it cannot judge.
+_DRIFT_MIN_TOPIC_WORDS = 2
+
+
+class DraftDriftError(RuntimeError):
+    """The LLM returned a draft about a different topic than the one asked for."""
+
+
+def _content_words(text: str) -> set:
+    """Distinctive tokens: 2+ chars, letters or digits, minus function words.
+
+    Keeps short tokens and numbers on purpose. An early version required four
+    letters and dropped both, which flagged the draft for "AI is changing
+    everything in 2026" titled "AI Revolution 2026" as off-topic — the two words
+    that actually identified the subject were the two it threw away.
+    """
+    tokens = re.findall(r"[a-z0-9][a-z0-9'-]*", str(text).lower())
+    return {t.strip("'-") for t in tokens
+            if len(t.strip("'-")) >= 2 and t.strip("'-") not in _DRIFT_STOPWORDS}
+
+
+def topic_drift(news: str, draft: dict) -> str | None:
+    """Return a reason string if the draft is not about `news`, else None.
+
+    One shared distinctive word is enough. The bar is deliberately low: this
+    catches a draft with nothing whatsoever in common with the request, not a
+    loose paraphrase, and a stricter rule would reject good drafts.
+    """
+    topic_words = _content_words(news)
+    if len(topic_words) < _DRIFT_MIN_TOPIC_WORDS:
+        return None
+
+    body = " ".join(str(draft.get(k, "")) for k in
+                    ("script", "youtube_title", "youtube_description", "thumbnail_prompt"))
+    draft_words = _content_words(body)
+    if not draft_words:
+        return "draft has no usable text"
+
+    if topic_words & draft_words:
+        return None
+    return f"no overlap between topic words {sorted(topic_words)[:6]} and the draft"
 
 
 def generate_draft(
@@ -301,4 +358,17 @@ Output ONLY a valid JSON object, nothing else. Start with {{ and end with }}:
     draft["research"] = research
     draft["niche"] = niche
     draft["platform"] = platform
+
+    # The model occasionally returns a well-formed draft about something else
+    # entirely — a "zombie-ant fungus" topic came back as a script on pareidolia,
+    # and a Neptune topic as one on why the brain makes up stories. Both parsed
+    # cleanly, so every downstream check passed and the queue marked the real
+    # topic as drafted. Nothing else in the pipeline compares the draft to what
+    # was asked for, so a wrong-topic script is indistinguishable from a right one.
+    drift = topic_drift(news, draft)
+    if drift:
+        raise DraftDriftError(
+            f"Draft does not match the requested topic ({drift}). "
+            f"Asked for: {news[:80]!r}. Got title: {str(draft.get('youtube_title',''))[:80]!r}"
+        )
     return draft

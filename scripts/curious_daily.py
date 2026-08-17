@@ -133,11 +133,18 @@ def main():
         try:
             import time
 
-            from verticals.draft import generate_draft
+            from verticals.draft import DraftDriftError, generate_draft
             from verticals.state import PipelineState
             DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
             job_id = str(int(time.time()))
-            d = generate_draft(best["topic"], "", niche=NICHE, platform="shorts")
+            # Drift is an intermittent model error, not a bad topic, so one
+            # retry usually lands. Two failures in a row is worth surfacing
+            # rather than silently banking a script about something else.
+            try:
+                d = generate_draft(best["topic"], "", niche=NICHE, platform="shorts")
+            except DraftDriftError as e:
+                log(f"Draft drifted off-topic, retrying once: {e}")
+                d = generate_draft(best["topic"], "", niche=NICHE, platform="shorts")
             d["job_id"] = job_id
             d["topic_score"] = {k: best[k] for k in ("total", "verdict", "pillars", "summary")}
             out = DRAFTS_DIR / f"{job_id}.json"
