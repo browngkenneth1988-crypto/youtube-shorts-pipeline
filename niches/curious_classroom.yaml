@@ -341,15 +341,41 @@ discovery:
       - "explainlikeimfive"
       - "space"
       - "psychology"
-  # Verified returning entries Aug 5 2026 (60 / 30 / 271 / 20 respectively).
+  # Widened Aug 16 2026. The original five feeds had gone stale — every run for
+  # an evening returned the same ten headlines, all already scored, so the queue
+  # could not grow. Six feeds added, each fetched twice before being listed here
+  # and checked against the seven pillars rather than added for volume.
+  #
+  # --limit still caps how many candidates get scored, so this costs nothing
+  # extra per run: the same number of topics are scored, drawn from a wider and
+  # fresher pool.
+  #
+  # Rejected during that check:
+  #   reddit .rss    — returned 25 entries once, then 0 for every subreddit a
+  #                    minute later. Rate-limited, same as the .json API. An
+  #                    intermittent source is worse than none: it works when
+  #                    tested and is empty at 6am.
+  #   Atlas Obscura  — /feeds/latest is place listings ("Murales del Borgo San
+  #                    Giuliano in Rimini"), which the rubric rejects. Would burn
+  #                    scoring calls to produce rejects.
+  #   BBC Science    — breaking news and disasters, not curiosity.
+  #   IFLScience, EurekAlert — returned 0 entries.
   rss:
     enabled: true
     feeds:
+      # Original five, verified Aug 5 2026
       - "https://www.sciencedaily.com/rss/top/science.xml"
       - "https://phys.org/rss-feed/"
       - "https://www.smithsonianmag.com/rss/smart-news/"
       - "https://www.livescience.com/feeds/all"
       - "https://feeds.arstechnica.com/arstechnica/science"
+      # Added Aug 16 2026, verified twice. Pillar each one feeds:
+      - "https://www.sciencenews.org/feed"                  # Strange Science
+      - "https://api.quantamagazine.org/feed/"              # Strange Science, deep
+      - "https://nautil.us/feed/"                           # Animals & Nature, Psychology
+      - "https://www.nasa.gov/rss/dyn/breaking_news.rss"    # Space & Earth
+      - "https://www.newscientist.com/feed/home/"           # Strange Science
+      - "https://hakaimagazine.com/feed/"                   # Animals & Nature, ocean
   google_trends:
     enabled: false      # noisy and news-cycle driven; the rubric rejects most of it anyway
     category: "174"
