@@ -168,3 +168,66 @@ class TestExhaustion:
              patch.object(llm.time, "sleep"):
             assert llm.call_llm("p") == "from claude"
         assert "gemini" in llm._exhausted
+
+
+class TestJsonModeReachesClaude:
+    """score.py asks every provider for JSON; only Gemini was ever told.
+
+    call_llm(json_mode=True) was forwarded to _call_gemini and silently dropped
+    for Claude, which then returned its JSON wrapped in a ```json fence that the
+    parser had to strip. Claude cannot be configured the way Gemini is —
+    `temperature` is deprecated on this model and prefill is unsupported, both
+    hard 400s — so the instruction is the only available lever.
+    """
+
+    def test_dispatch_forwards_json_mode_to_claude(self):
+        with patch.object(llm, "_throttle"), \
+             patch.object(llm, "_call_claude", return_value="{}") as claude:
+            llm._dispatch("claude", "p", 1024, json_mode=True)
+        assert claude.call_args.kwargs.get("json_mode") is True
+
+    def test_dispatch_defaults_json_mode_off(self):
+        with patch.object(llm, "_throttle"), \
+             patch.object(llm, "_call_claude", return_value="{}") as claude:
+            llm._dispatch("claude", "p", 1024)
+        assert claude.call_args.kwargs.get("json_mode") is False
+
+    def test_json_mode_appends_an_instruction_to_the_prompt(self):
+        sent = {}
+
+        class FakeMsg:
+            stop_reason = "end_turn"
+            content = [type("B", (), {"type": "text", "text": "{}"})()]
+
+        class FakeClient:
+            class messages:
+                @staticmethod
+                def create(**kw):
+                    sent.update(kw)
+                    return FakeMsg()
+
+        with patch.object(llm, "get_claude_backend", return_value="api"), \
+             patch.object(llm, "get_anthropic_client", return_value=FakeClient()):
+            llm._call_claude("SCORE THIS", 1024, json_mode=True)
+        text = sent["messages"][0]["content"]
+        assert text.startswith("SCORE THIS")
+        assert "single valid JSON object" in text
+
+    def test_prompt_is_untouched_without_json_mode(self):
+        sent = {}
+
+        class FakeMsg:
+            stop_reason = "end_turn"
+            content = [type("B", (), {"type": "text", "text": "{}"})()]
+
+        class FakeClient:
+            class messages:
+                @staticmethod
+                def create(**kw):
+                    sent.update(kw)
+                    return FakeMsg()
+
+        with patch.object(llm, "get_claude_backend", return_value="api"), \
+             patch.object(llm, "get_anthropic_client", return_value=FakeClient()):
+            llm._call_claude("SCORE THIS", 1024)
+        assert sent["messages"][0]["content"] == "SCORE THIS"

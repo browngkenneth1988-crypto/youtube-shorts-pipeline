@@ -210,7 +210,7 @@ def _dispatch(provider: str, prompt: str, max_tokens: int,
     """Route to one provider's implementation, after pacing."""
     _throttle(provider)
     if provider == "claude":
-        return _call_claude(prompt, max_tokens)
+        return _call_claude(prompt, max_tokens, json_mode=json_mode)
     elif provider == "claude_cli":
         return call_claude_cli(prompt, max_tokens=max_tokens)
     elif provider == "gemini":
@@ -269,11 +269,32 @@ def call_llm(prompt: str, provider: str | None = None, max_tokens: int = 1500,
     )
 
 
-def _call_claude(prompt: str, max_tokens: int) -> str:
-    """Call Claude via Anthropic API."""
+def _call_claude(prompt: str, max_tokens: int, json_mode: bool = False) -> str:
+    """Call Claude via Anthropic API.
+
+    json_mode used to be accepted by call_llm, forwarded to Gemini, and
+    silently dropped here — score.py asks for JSON from every provider and
+    only one of them was ever told. Claude cannot be configured the way
+    Gemini is: `temperature` is deprecated on this model (400), and response
+    prefill is unsupported (400), so neither of Gemini's determinism levers
+    exists. The one available lever is the instruction itself, so json_mode
+    now appends an explicit JSON-only line.
+
+    This is a correctness fix, not a scoring fix. Claude already returns
+    clean JSON here, and measured variance is low (stdev 0.9 over four runs
+    on one topic), so the ~4.6-point scoring offset against Gemini is
+    calibration, not formatting, and this will not close it.
+    """
     backend = get_claude_backend()
     if backend == "cli":
         return call_claude_cli(prompt, max_tokens=max_tokens)
+
+    if json_mode:
+        prompt = (
+            prompt.rstrip()
+            + "\n\nRespond with a single valid JSON object and nothing else. "
+            + "No prose, no code fences, no commentary before or after it."
+        )
 
     client = get_anthropic_client()
     # Sonnet 5, not Opus 5. This path is a paid fallback for a free-tier job:

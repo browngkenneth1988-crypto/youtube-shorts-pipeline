@@ -99,7 +99,10 @@ class TestCallLlmRouting:
         with patch("verticals.llm.get_provider", return_value="claude"), \
              patch("verticals.llm._call_claude", return_value="claude-out") as mock_claude:
             assert llm.call_llm("hi", max_tokens=100) == "claude-out"
-            mock_claude.assert_called_once_with("hi", 100)
+            # json_mode is forwarded now — it used to be dropped for Claude
+            # while Gemini received it, so score.py asked every provider for
+            # JSON and only one was told.
+            mock_claude.assert_called_once_with("hi", 100, json_mode=False)
 
     def test_routes_to_gemini(self):
         with patch("verticals.llm.get_provider", return_value="gemini"), \
